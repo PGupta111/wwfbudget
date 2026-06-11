@@ -1,0 +1,108 @@
+// Personal tax estimator + spending breakdown bars (also used as the
+// default, no-input "whole township" view).
+import { dollars, getSpendingByGroup, getRevenueSources } from "./helpers.js";
+
+// Most recently published municipal (local-purpose) tax rate per $100 of
+// assessed value, from the 2026 Levy CAP Calculation (Sheet 3-Levy CAP).
+const LOCAL_PURPOSE_TAX_RATE = 0.427;
+
+export function initCalculator(data) {
+  const total = data.headline.total_budget.amount;
+  const groups = getSpendingByGroup(data);
+  const propertyTaxTotal = getRevenueSources(data).find((r) => r.label === "Property taxes")?.amount || 0;
+
+  const input = document.getElementById("assessed-value");
+  const resultValue = document.getElementById("calc-result-value");
+  const title = document.getElementById("breakdown-title");
+  const rowsEl = document.getElementById("breakdown-rows");
+  const compareFill = document.getElementById("compare-fill");
+  const compareLabel = document.getElementById("compare-label");
+
+  // Build the row markup once so the fill bars and numbers can transition
+  // smoothly between renders instead of being torn down and rebuilt.
+  rowsEl.innerHTML = groups
+    .map(
+      (g) => `
+        <div class="breakdown-row" title="${g.blurb}">
+          <div class="breakdown-row-head">
+            <span class="group-name">${g.group}</span>
+            <span class="group-amounts" data-amount></span>
+          </div>
+          <div class="breakdown-track">
+            <div class="breakdown-fill" data-fill style="background:${g.color};"></div>
+          </div>
+        </div>`
+    )
+    .join("");
+
+  const fillEls = rowsEl.querySelectorAll("[data-fill]");
+  const amountEls = rowsEl.querySelectorAll("[data-amount]");
+
+  function render({ animateFills = true } = {}) {
+    const raw = input.value.trim();
+    const assessedValue = raw === "" ? null : Number(raw);
+    const hasValue = assessedValue !== null && !Number.isNaN(assessedValue) && assessedValue > 0;
+    const personalTotal = hasValue ? (assessedValue * LOCAL_PURPOSE_TAX_RATE) / 100 : null;
+
+    resultValue.textContent = hasValue ? dollars(personalTotal, 2) : "Enter a value above";
+
+    title.textContent = hasValue
+      ? `Where your estimated ${dollars(personalTotal, 2)} goes`
+      : "Where the 2026 budget goes";
+
+    groups.forEach((g, i) => {
+      const share = g.amount / total;
+      const displayAmount = hasValue ? personalTotal * share : g.amount;
+      const widthPct = `${(share * 100).toFixed(2)}%`;
+
+      amountEls[i].textContent = `${dollars(displayAmount, hasValue ? 2 : 0)} · ${(share * 100).toFixed(1)}%`;
+
+      const fill = fillEls[i];
+      fill.style.width = widthPct;
+
+      if (animateFills) {
+        fill.classList.remove("is-pulsing");
+        // Restart the pulse animation on every change.
+        void fill.offsetWidth;
+        fill.classList.add("is-pulsing");
+      }
+    });
+
+    // "Compared to everyone else" meter: how the resident's estimated bill
+    // stacks up against the total amount raised townwide via property taxes.
+    if (hasValue && propertyTaxTotal > 0) {
+      const sharePct = (personalTotal / propertyTaxTotal) * 100;
+      const displayPct = Math.min(sharePct, 100);
+      compareFill.style.width = `${displayPct.toFixed(4)}%`;
+      compareFill.classList.add("has-value");
+      const precision = sharePct < 0.01 ? 4 : sharePct < 1 ? 3 : 2;
+      compareLabel.innerHTML = `Your estimated bill is about <strong>${sharePct.toFixed(precision)}%</strong> of the ${dollars(
+        propertyTaxTotal,
+        0
+      )} raised townwide through property taxes in 2026.`;
+    } else {
+      compareFill.style.width = "0%";
+      compareFill.classList.remove("has-value");
+      compareLabel.textContent =
+        "Enter your assessed value to see how your estimated bill compares to the total raised townwide through property taxes.";
+    }
+  }
+
+  input.addEventListener("input", () => render({ animateFills: true }));
+
+  // Initial draw-in: start every bar at 0 width, then animate to its real
+  // share once the page has painted.
+  render({ animateFills: false });
+  fillEls.forEach((fill) => {
+    fill.style.transition = "none";
+    fill.style.width = "0%";
+  });
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      fillEls.forEach((fill) => {
+        fill.style.transition = "";
+      });
+      render({ animateFills: false });
+    });
+  });
+}
