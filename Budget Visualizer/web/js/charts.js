@@ -13,82 +13,31 @@ function resolveColor(cssVar) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
-// Wrap a label into at most `maxLines` tspans of roughly `maxChars` characters.
-function wrapLabel(text, maxChars, maxLines) {
-  const words = text.split(/\s+/);
-  const lines = [];
-  let current = "";
-  for (const word of words) {
-    const candidate = current ? `${current} ${word}` : word;
-    if (candidate.length > maxChars && current) {
-      lines.push(current);
-      current = word;
-      if (lines.length === maxLines - 1) break;
-    } else {
-      current = candidate;
-    }
-  }
-  if (current) lines.push(current);
-  // Whatever's left over gets folded into the last line (with ellipsis if needed)
-  const consumed = lines.join(" ").length;
-  if (consumed < text.length) {
-    const last = lines.pop();
-    let combined = `${last} ${words.slice(text.split(" ").length - 0).join("")}`.trim();
-    // Simpler: just append remaining words and ellipsize
-    const usedWords = lines.join(" ").split(/\s+/).filter(Boolean).length;
-    const remaining = words.slice(usedWords + last.split(/\s+/).length).join(" ");
-    combined = remaining ? `${last}…` : last;
-    lines.push(combined);
-  }
-  return lines;
-}
-
-/** Push down/up a sorted-by-y array of label objects so none overlap, while
- * staying within [minY, maxY]. */
-function layoutLabels(items, minGap, minY, maxY) {
-  items.sort((a, b) => a.y - b.y);
-  for (let i = 1; i < items.length; i++) {
-    if (items[i].y - items[i - 1].y < minGap) items[i].y = items[i - 1].y + minGap;
-  }
-  const overflow = items[items.length - 1]?.y - maxY;
-  if (overflow > 0) {
-    items.forEach((d) => (d.y -= overflow));
-    for (let i = 1; i < items.length; i++) {
-      if (items[i].y - items[i - 1].y < minGap) items[i].y = items[i - 1].y + minGap;
-    }
-  }
-  if (items[0] && items[0].y < minY) items[0].y = minY;
-}
-
 /** Render a big donut chart of {label/group, amount, color} into svgId, with
- * external leader-line labels (name + amount) placed next to each slice, a
- * centered running total, and a hover popover with a fuller description
- * (from getDetail). Arcs draw in and labels fade in with a stagger the first
- * time the chart scrolls into view. */
-export function renderDonut(items, total, svgId, centerId, getDetail) {
+ * a centered running total and a hover/click popover with a fuller
+ * description (from getDetail) for each slice. The full breakdown (name,
+ * amount, color swatch) lives in the linked cards/list rendered alongside
+ * the chart. Arcs draw in the first time the chart scrolls into view. */
+export function renderDonut(items, total, svgId, centerId, getDetail, opts = {}) {
+  const { onSliceActivate } = opts;
   const width = 760;
-  const height = 480;
+  const height = 760;
   const cx = width / 2;
   const cy = height / 2;
-  const outerR = 92;
-  const innerR = 60;
-  const bendR = 108;
-  const labelX = 270;
+  const outerR = 336;
+  const innerR = 215;
 
   const svg = d3.select(`#${svgId}`).attr("viewBox", `0 0 ${width} ${height}`);
   svg.selectAll("*").remove();
 
   const g = svg.append("g").attr("transform", `translate(${cx},${cy})`);
-  const labelLayer = svg.append("g").attr("transform", `translate(${cx},${cy})`);
 
   const pie = d3.pie().value((d) => d.amount).sort(null).padAngle(0.006);
   const arc = d3.arc().innerRadius(innerR).outerRadius(outerR).cornerRadius(2);
-  const outerArc = d3.arc().innerRadius(bendR).outerRadius(bendR);
-  const hoverArc = d3.arc().innerRadius(innerR).outerRadius(outerR + 6).cornerRadius(2);
+  const hoverArc = d3.arc().innerRadius(innerR).outerRadius(outerR + 8).cornerRadius(2);
 
   const arcsData = pie(items);
   const sum = items.reduce((s, d) => s + d.amount, 0);
-  const midAngle = (d) => d.startAngle + (d.endAngle - d.startAngle) / 2;
 
   const popover = ensureDonutPopover();
 
@@ -122,6 +71,42 @@ export function renderDonut(items, total, svgId, centerId, getDetail) {
     popover.classed("visible", false);
   }
 
+  let pinnedIndex = null;
+
+  /** Highlight/dim from outside (e.g. a linked card). Ignored while a slice is pinned. */
+  function highlight(idx) {
+    if (pinnedIndex !== null) return;
+    setActive(idx == null ? null : [idx]);
+  }
+
+  /** Pin/unpin from outside (e.g. a linked card click/tap). */
+  function togglePin(idx) {
+    if (pinnedIndex === idx) {
+      pinnedIndex = null;
+      setActive(null);
+      hidePopover();
+      onSliceActivate?.(null);
+    } else {
+      pinnedIndex = idx;
+      setActive([idx]);
+      showPopover(arcsData[idx], paths.nodes()[idx]);
+      onSliceActivate?.(idx);
+    }
+  }
+
+  function setActive(indices) {
+    const set = indices == null ? null : new Set(indices);
+    paths
+      .classed("is-dimmed", (d, i) => set && !set.has(i))
+      .classed("is-highlighted", (d, i) => set && set.has(i))
+      .each(function (d, i) {
+        d3.select(this)
+          .transition()
+          .duration(160)
+          .attr("d", set && set.has(i) ? hoverArc : arc);
+      });
+  }
+
   // Slices
   const paths = g
     .selectAll("path")
@@ -132,106 +117,36 @@ export function renderDonut(items, total, svgId, centerId, getDetail) {
     .attr("stroke-width", 2)
     .style("cursor", "pointer")
     .attr("d", (d) => arc({ ...d, startAngle: d.startAngle, endAngle: d.startAngle }))
-    .on("mouseenter", function (event, d) {
-      d3.select(this).transition().duration(160).attr("d", hoverArc);
+    .on("mouseenter", function (event, d, i) {
+      if (pinnedIndex !== null) return;
+      const idx = arcsData.indexOf(d);
+      setActive([idx]);
       showPopover(d, this);
+      onSliceActivate?.(idx);
     })
     .on("mouseleave", function () {
-      d3.select(this).transition().duration(160).attr("d", arc);
+      if (pinnedIndex !== null) return;
+      setActive(null);
       hidePopover();
+      onSliceActivate?.(null);
+    })
+    .on("click", function (event, d) {
+      const idx = arcsData.indexOf(d);
+      if (pinnedIndex === idx) {
+        pinnedIndex = null;
+        setActive(null);
+        hidePopover();
+        onSliceActivate?.(null);
+      } else {
+        pinnedIndex = idx;
+        setActive([idx]);
+        showPopover(d, this);
+        onSliceActivate?.(idx);
+      }
     });
 
   // Center running total
   const centerEl = centerId ? document.getElementById(centerId) : null;
-
-  // External leader-line labels, split left/right and collision-avoided.
-  const leftItems = [];
-  const rightItems = [];
-  arcsData.forEach((d) => {
-    const angle = midAngle(d);
-    const isRight = angle < Math.PI;
-    const [, y] = outerArc.centroid(d);
-    const entry = { d, y, angle, isRight };
-    (isRight ? rightItems : leftItems).push(entry);
-  });
-  layoutLabels(rightItems, 46, -cy + 16, cy - 16);
-  layoutLabels(leftItems, 46, -cy + 16, cy - 16);
-
-  const allLabelItems = [...leftItems, ...rightItems];
-
-  const labelGroups = labelLayer
-    .selectAll("g")
-    .data(allLabelItems)
-    .join("g")
-    .attr("class", "donut-label-group")
-    .style("cursor", "pointer")
-    .style("opacity", 0)
-    .on("mouseenter", function (entry) {
-      const idx = arcsData.indexOf(entry.d);
-      const path = paths.nodes()[idx];
-      d3.select(path).transition().duration(160).attr("d", hoverArc);
-      showPopover(entry.d, path);
-    })
-    .on("mouseleave", function (entry) {
-      const idx = arcsData.indexOf(entry.d);
-      const path = paths.nodes()[idx];
-      d3.select(path).transition().duration(160).attr("d", arc);
-      hidePopover();
-    });
-
-  // Leader lines
-  labelGroups
-    .append("polyline")
-    .attr("class", "donut-leader")
-    .attr("points", (entry) => {
-      const d = entry.d;
-      const arcPoint = arc.centroid(d);
-      const bendPoint = outerArc.centroid(d);
-      const labelPoint = [entry.isRight ? labelX : -labelX, entry.y];
-      return [arcPoint, bendPoint, labelPoint].map((p) => p.join(",")).join(" ");
-    });
-
-  // Swatch
-  labelGroups
-    .append("circle")
-    .attr("class", "donut-label-swatch")
-    .attr("r", 4)
-    .attr("fill", (entry) => resolveColor(entry.d.data.color))
-    .attr("cx", (entry) => (entry.isRight ? labelX - 8 : -labelX + 8))
-    .attr("cy", (entry) => entry.y);
-
-  // Term + amount text (wrapped to 2 lines)
-  labelGroups.each(function (entry) {
-    const group = d3.select(this);
-    const anchor = entry.isRight ? "start" : "end";
-    const textX = entry.isRight ? labelX + 2 : -labelX - 2;
-    const lines = wrapLabel(entry.d.data.label || entry.d.data.group, 22, 2);
-    const startDy = lines.length > 1 ? -5 : 4;
-
-    const nameText = group
-      .append("text")
-      .attr("class", "donut-label-name")
-      .attr("x", textX)
-      .attr("y", entry.y)
-      .attr("text-anchor", anchor);
-
-    lines.forEach((line, i) => {
-      nameText
-        .append("tspan")
-        .attr("x", textX)
-        .attr("dy", i === 0 ? startDy : 13)
-        .text(line);
-    });
-
-    group
-      .append("text")
-      .attr("class", "donut-label-amount")
-      .attr("x", textX)
-      .attr("y", entry.y)
-      .attr("dy", startDy + (lines.length - 1) * 13 + 13)
-      .attr("text-anchor", anchor)
-      .text(dollars(entry.d.data.amount, 0));
-  });
 
   function animateNumber(el, target, duration) {
     if (!el) return;
@@ -247,7 +162,7 @@ export function renderDonut(items, total, svgId, centerId, getDetail) {
       });
   }
 
-  function animate() {
+  function animateIn() {
     paths
       .transition()
       .duration(900)
@@ -257,24 +172,41 @@ export function renderDonut(items, total, svgId, centerId, getDetail) {
         return (t) => arc(interp(t));
       });
 
-    labelGroups
-      .transition()
-      .delay((_, i) => 300 + i * 45)
-      .duration(450)
-      .ease(d3.easeCubicOut)
-      .style("opacity", 1);
-
     animateNumber(centerEl, sum, 900);
   }
 
-  const wrap = svg.node().closest(".donut-grid") || svg.node().closest(".donut-feature");
-  if (wrap && "IntersectionObserver" in window) {
+  // Collapse the ring back down and zero the running total, so the chart
+  // re-plays its draw-in animation each time it scrolls back into view.
+  function animateOut() {
+    paths
+      .transition()
+      .duration(500)
+      .ease(d3.easeCubicIn)
+      .attrTween("d", function (d) {
+        const interp = d3.interpolate(d, { startAngle: d.startAngle, endAngle: d.startAngle });
+        return (t) => arc(interp(t));
+      });
+
+    animateNumber(centerEl, 0, 500);
+  }
+
+  const featureEl = svg.node().closest(".donut-feature");
+  const wrap = featureEl || svg.node().closest(".donut-grid");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduceMotion) {
+    paths.attr("d", arc);
+    if (centerEl) centerEl.textContent = dollars(sum, 0);
+  } else if (wrap && "IntersectionObserver" in window) {
+    let visible = false;
     const observer = new IntersectionObserver(
-      (entries, obs) => {
+      (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            animate();
-            obs.unobserve(entry.target);
+          if (entry.isIntersecting && !visible) {
+            visible = true;
+            animateIn();
+          } else if (!entry.isIntersecting && visible) {
+            visible = false;
+            animateOut();
           }
         });
       },
@@ -282,8 +214,10 @@ export function renderDonut(items, total, svgId, centerId, getDetail) {
     );
     observer.observe(wrap);
   } else {
-    animate();
+    animateIn();
   }
+
+  return { highlight, togglePin };
 }
 
 let donutPopoverEl = null;
@@ -342,7 +276,8 @@ export function renderSankey(data, onNodeClick) {
   svg.selectAll("*").remove();
 
   // A flowier custom link path (d3-sankey's bundled sankeyLinkHorizontal
-  // doesn't expose .curvature() in this build, so interpolate manually).
+  // doesn't expose .curvature() in this build, so interpolate manually),
+  // but with square (butt) ends so flows meet the rectangular nodes flush.
   const curvature = 0.58;
   const linkPath = (d) => {
     const x0 = d.source.x1;
@@ -366,7 +301,7 @@ export function renderSankey(data, onNodeClick) {
     .attr("d", linkPath)
     .attr("stroke", (d) => d.color)
     .attr("stroke-width", (d) => Math.max(1, d.width))
-    .style("stroke-linecap", "round")
+    .style("stroke-linecap", "butt")
     .on("mousemove", (event, d) => {
       const pct = ((d.value / total) * 100).toFixed(1);
       tooltip
@@ -375,18 +310,37 @@ export function renderSankey(data, onNodeClick) {
         .style("top", `${event.pageY - 24}px`)
         .html(`${d.source.name} &rarr; ${d.target.name}<br><strong>${dollars(d.value, 2)}</strong> (${pct}%)`);
     })
-    .on("mouseleave", () => tooltip.style("opacity", 0));
+    .on("mouseleave", () => tooltip.style("opacity", 0))
+    .on("click", function (event, d) {
+      const wasActive = d3.select(this).classed("is-active");
+      if (!wasActive) {
+        setActive({ type: "link", element: this, datum: d });
+        onNodeClick?.(
+          {
+            name: `${d.source.name} → ${d.target.name}`,
+            value: d.value,
+            side: "link",
+            source: d.source,
+            target: d.target,
+            color: d.color,
+          },
+          total
+        );
+      } else {
+        setActive(null);
+        onNodeClick?.(null);
+      }
+    });
 
-  // Draw-in animation: links sweep in from their source the first time the
-  // chart scrolls into view.
+  // Draw-in/out animation: links sweep in from their source when the chart
+  // scrolls into view, and retreat again when it scrolls out, so the
+  // animation re-plays each time the diagram comes back into view.
   link.each(function () {
     const length = this.getTotalLength();
-    d3.select(this)
-      .attr("stroke-dasharray", `${length} ${length}`)
-      .attr("stroke-dashoffset", length);
+    d3.select(this).attr("stroke-dasharray", `${length} ${length}`);
   });
 
-  function animateLinks() {
+  function animateLinksIn() {
     link
       .transition()
       .duration(1100)
@@ -395,14 +349,34 @@ export function renderSankey(data, onNodeClick) {
       .attr("stroke-dashoffset", 0);
   }
 
+  function animateLinksOut() {
+    link
+      .transition()
+      .duration(600)
+      .ease(d3.easeCubicIn)
+      .attr("stroke-dashoffset", function () {
+        return this.getTotalLength();
+      });
+  }
+
   const sankeyWrap = svg.node().closest(".sankey-card");
-  if (sankeyWrap && "IntersectionObserver" in window) {
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduceMotion) {
+    link.attr("stroke-dashoffset", 0);
+  } else if (sankeyWrap && "IntersectionObserver" in window) {
+    link.attr("stroke-dashoffset", function () {
+      return this.getTotalLength();
+    });
+    let visible = false;
     const sankeyObserver = new IntersectionObserver(
-      (entries, obs) => {
+      (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            animateLinks();
-            obs.unobserve(entry.target);
+          if (entry.isIntersecting && !visible) {
+            visible = true;
+            animateLinksIn();
+          } else if (!entry.isIntersecting && visible) {
+            visible = false;
+            animateLinksOut();
           }
         });
       },
@@ -410,7 +384,7 @@ export function renderSankey(data, onNodeClick) {
     );
     sankeyObserver.observe(sankeyWrap);
   } else {
-    animateLinks();
+    link.attr("stroke-dashoffset", 0);
   }
 
   // Nodes
@@ -426,8 +400,16 @@ export function renderSankey(data, onNodeClick) {
     node.classed("is-dimmed", false);
     link.classed("is-dimmed", false);
     link.classed("is-highlighted", false);
+    link.classed("is-active", false);
 
     if (!target) return;
+
+    if (target.type === "link") {
+      d3.select(target.element).classed("is-active", true).classed("is-highlighted", true);
+      link.filter((d) => d !== target.datum).classed("is-dimmed", true);
+      node.classed("is-dimmed", (d) => d !== target.datum.source && d !== target.datum.target);
+      return;
+    }
 
     d3.select(target.group).classed("is-active", true);
     node.filter((d) => d !== target.datum).classed("is-dimmed", true);
@@ -457,7 +439,7 @@ export function renderSankey(data, onNodeClick) {
       const group = this.parentNode;
       const wasActive = d3.select(group).classed("is-active");
       if (!wasActive) {
-        setActive({ group, datum: d });
+        setActive({ type: "node", group, datum: d });
         onNodeClick?.(d, total);
       } else {
         setActive(null);

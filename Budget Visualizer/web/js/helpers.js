@@ -121,6 +121,64 @@ export function getSpendingByGroup(data) {
     .sort((a, b) => b.amount - a.amount);
 }
 
+/** Township-wide 2026 vs. 2025 appropriations total, from the same line items
+ * used everywhere else (so it reconciles with the spending donut/Sankey). */
+export function getTotalAppropriationsYoY(data) {
+  let total2026 = 0;
+  let total2025 = 0;
+  for (const row of getLineItems(data)) {
+    total2026 += row.appropriated_2026_usd || 0;
+    total2025 += row.appropriated_2025_usd || 0;
+  }
+  const change = total2026 - total2025;
+  return { total2026, total2025, change, pctChange: total2025 ? (change / total2025) * 100 : null };
+}
+
+/** 2026 vs. 2025 spending by functional category, sorted by the size of the
+ * dollar change (largest movers first, regardless of direction). */
+export function getSpendingByGroupYoY(data) {
+  const totals2026 = new Map();
+  const totals2025 = new Map();
+  for (const row of getLineItems(data)) {
+    const group = row.functional_group;
+    totals2026.set(group, (totals2026.get(group) || 0) + (row.appropriated_2026_usd || 0));
+    totals2025.set(group, (totals2025.get(group) || 0) + (row.appropriated_2025_usd || 0));
+  }
+  const groups = new Set([...totals2026.keys(), ...totals2025.keys()]);
+  return [...groups]
+    .map((group) => {
+      const amount2026 = totals2026.get(group) || 0;
+      const amount2025 = totals2025.get(group) || 0;
+      const change = amount2026 - amount2025;
+      return {
+        group,
+        amount2026,
+        amount2025,
+        change,
+        pctChange: amount2025 ? (change / amount2025) * 100 : null,
+        color: FUNCTIONAL_GROUPS[group]?.color || "var(--grp-13)",
+      };
+    })
+    .sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
+}
+
+/** The largest individual 2026 appropriation line items, largest first. */
+export function getLargestSpendingLines(data, n = 10) {
+  return getLineItems(data)
+    .filter((row) => (row.appropriated_2026_usd || 0) > 0)
+    .map((row) => ({
+      label: row.account_program || row.department_division_as_printed || "Unlabeled",
+      department: row.department_division_as_printed,
+      group: row.functional_group,
+      amount: row.appropriated_2026_usd,
+      amount2025: row.appropriated_2025_usd || 0,
+      fcoa: row.fcoa,
+      source: row.source_sheet,
+    }))
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, n);
+}
+
 /** Real 2026 line items within a functional group, broken down by department/division
  * (using the most specific part of the printed department label), largest first. */
 export function getDepartmentBreakdown(data, group) {

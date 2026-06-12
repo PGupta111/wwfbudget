@@ -23,13 +23,11 @@
       </span>
     </a>
     <nav class="site-nav">
-      <a href="#glance">At a Glance</a>
+      <a href="#glance">Overview</a>
       <a href="#flow">Money Flow</a>
       <a href="#calculator">Your Share</a>
-      <a href="#caps">Spending Caps</a>
-      <a href="#glossary">Glossary</a>
-      <a href="#about">About the Data</a>
-      <a href="data.html" class="nav-cta">Data Tables</a>
+      <a href="#about">FAQ</a>
+      <a href="data.html" class="nav-cta">Data</a>
     </nav>
   </div>
 </header>
@@ -38,21 +36,52 @@
   <div class="container hero-grid">
     <div class="hero-copy">
       <span class="eyebrow">Township of West Windsor &middot; Adopted 2026 Municipal Budget</span>
-      <h1>Where does the town's money come from, and where does it go?</h1>
+      <h1>West Windsor's 2026 municipal budget, explained</h1>
       <p>
-        Every town collects taxes and fees, then spends that money on police,
-        roads, parks, and more. This page walks through West Windsor's
-        adopted 2026 budget &mdash; <strong>$57,685,649.81</strong> &mdash;
-        using the township's own published numbers, with nothing added,
-        removed, or estimated unless we say so.
+        A resident-friendly guide to where the township's money comes from,
+        where it goes, and what it means for your household &mdash; based on
+        the municipal budget only, not your school or county taxes.
       </p>
+      <ul class="hero-chips">
+        <li>Adopted 2026 budget</li>
+        <li>170 appropriation rows</li>
+        <li>Verified against source sheets</li>
+        <li>Built by West Windsor Forward</li>
+        <li>Municipal only</li>
+      </ul>
       <div class="hero-actions">
         <a class="btn btn-primary" href="#flow">See the money flow</a>
-        <a class="btn btn-ghost" href="#calculator">Find your share</a>
+        <a class="btn btn-secondary" href="#calculator">Estimate your share</a>
+        <a class="btn btn-ghost" href="data.html">Explore the data</a>
       </div>
     </div>
     <div class="hero-art">
-      <img src="assets/hero-illustration.png" alt="" role="presentation" />
+      <div class="hero-panel">
+        <div class="hero-panel-decor" aria-hidden="true">
+          <span class="hero-ring hero-ring-1"></span>
+          <span class="hero-ring hero-ring-2"></span>
+          <span class="hero-ring hero-ring-3"></span>
+        </div>
+        <div class="hero-figure">
+          <div class="hero-figure-label">Total 2026 municipal budget</div>
+          <div class="hero-figure-value">$57.69M</div>
+          <div class="hero-figure-source">Source: Budget Summary, Sheet 3</div>
+        </div>
+        <div class="hero-panel-stats">
+          <div class="hero-panel-stat">
+            <strong>4</strong>
+            <span>revenue sources</span>
+          </div>
+          <div class="hero-panel-stat">
+            <strong>13</strong>
+            <span>spending categories</span>
+          </div>
+          <div class="hero-panel-stat">
+            <strong>170</strong>
+            <span>line items</span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -75,30 +104,53 @@
       <div class="donut-feature">
         <h3>Where the money comes from</h3>
         <div class="donut-feature-wrap">
-          <svg id="revenue-donut" viewBox="0 0 760 480"></svg>
+          <svg id="revenue-donut" viewBox="0 0 940 640"></svg>
           <div class="donut-center">
             <div class="donut-center-value" id="revenue-total">$0</div>
             <div class="donut-center-label">Total revenue</div>
           </div>
         </div>
+        <div class="donut-card-grid" id="revenue-cards"></div>
       </div>
       <div class="donut-feature">
         <h3>Where the money goes</h3>
         <div class="donut-feature-wrap">
-          <svg id="spending-donut" viewBox="0 0 760 480"></svg>
+          <svg id="spending-donut" viewBox="0 0 940 640"></svg>
           <div class="donut-center">
             <div class="donut-center-value" id="spending-total">$0</div>
             <div class="donut-center-label">Total spending</div>
           </div>
         </div>
+        <div class="donut-card-grid" id="spending-cards"></div>
+        <div class="donut-other-list" id="spending-other"></div>
       </div>
     </div>
-    <p class="donut-hint">Hover or tap a slice for details on what it includes.</p>
+    <p class="donut-hint">Hover or tap a slice &mdash; or a card below &mdash; for details on what it includes.</p>
+  </div>
+</section>
+
+<!-- ================= WHAT CHANGED FROM 2025 ================= -->
+<section class="section section--alt" id="changed">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Year over year</span>
+      <h2>What changed from 2025?</h2>
+      <p class="section-intro">
+        Every <span class="gloss-term" data-term="Appropriation">appropriation</span><span class="gloss-term gloss-btn" data-term="Appropriation" tabindex="0">?</span> line in the adopted budget also lists what was
+        budgeted for 2025, so the same totals can be compared year over year.
+        Figures below are the as-introduced 2025 amounts compared with the
+        adopted 2026 amounts &mdash; the categories with the biggest dollar
+        swings are shown first.
+      </p>
+    </div>
+    <div class="yoy-total" id="yoy-total"></div>
+    <div class="yoy-grid" id="yoy-grid"></div>
+    <p class="source-tag">Source: Appropriations Schedule (Sheets 12&ndash;30), 2025 vs. 2026 columns</p>
   </div>
 </section>
 
 <!-- ================= MONEY FLOW (SANKEY) ================= -->
-<section class="section section--alt" id="flow">
+<section class="section" id="flow">
   <div class="container">
     <div class="section-head">
       <span class="eyebrow">The whole township, no typing required</span>
@@ -111,10 +163,12 @@
         exact amount.
       </p>
     </div>
-    <div class="sankey-card">
-      <svg id="sankey-chart" viewBox="0 0 1180 720" preserveAspectRatio="xMidYMid meet"></svg>
-    </div>
-    <p class="sankey-hint">Click any bar in the chart above to see what it covers.</p>
+  </div>
+  <div class="sankey-card sankey-card--full">
+    <svg id="sankey-chart" viewBox="0 0 1180 720" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+  <div class="container">
+    <p class="sankey-hint">Click any bar &mdash; or any flow between them &mdash; to see what it covers.</p>
     <div class="sankey-detail" id="sankey-detail">
       <div class="sankey-detail-inner" id="sankey-detail-inner"></div>
     </div>
@@ -163,7 +217,7 @@
         <details class="calc-formula">
           <summary>How is this calculated?</summary>
           <p style="margin-top:.5rem;">
-            Estimate = Assessed Value &times; <span class="gloss-term" data-term="Local Purpose Tax Rate (per $100)">0.427</span> &divide; 100
+            Estimate = Assessed Value &times; <span class="gloss-term" data-term="Local Purpose Tax Rate (per $100)">0.427</span><span class="gloss-term gloss-btn" data-term="Local Purpose Tax Rate (per $100)" tabindex="0">?</span> &divide; 100
           </p>
           <code>$500,000 &times; 0.427 &divide; 100 = $2,135.00</code>
           <p style="margin-top:.5rem;">
@@ -200,12 +254,43 @@
       <p class="section-intro">
         New Jersey law limits how much most municipal spending
         (<span class="gloss-term" data-term='"CAPS" (Appropriation Cap)'>the
-        appropriation &ldquo;CAP&rdquo;</span>) and the property-tax levy
-        (the <span class="gloss-term" data-term="Levy Cap (2% Tax Levy Cap)">levy cap</span>)
+        appropriation &ldquo;CAP&rdquo;</span><span class="gloss-term gloss-btn" data-term='"CAPS" (Appropriation Cap)' tabindex="0">?</span>) and the property-tax levy
+        (the <span class="gloss-term" data-term="Levy Cap (2% Tax Levy Cap)">levy cap</span><span class="gloss-term gloss-btn" data-term="Levy Cap (2% Tax Levy Cap)" tabindex="0">?</span>)
         can grow each year. The adopted 2026 budget comes in under both.
       </p>
     </div>
     <div class="caps-grid" id="caps-grid"></div>
+  </div>
+</section>
+
+<!-- ================= LARGEST SPENDING LINES ================= -->
+<section class="section" id="largest">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">The biggest checks the township writes</span>
+      <h2>Largest 2026 spending lines</h2>
+      <p class="section-intro">
+        These ten line items account for the largest single appropriations
+        in the 2026 budget &mdash; together they make up a large share of
+        all municipal spending. Each row links back to its functional group
+        above.
+      </p>
+    </div>
+    <div class="table-wrap">
+      <table id="largest-table">
+        <thead>
+          <tr>
+            <th>Line item</th>
+            <th>Functional group</th>
+            <th class="num">2026 amount</th>
+            <th class="num">% of budget</th>
+            <th class="num">2025 amount</th>
+          </tr>
+        </thead>
+        <tbody id="largest-body"></tbody>
+      </table>
+    </div>
+    <p class="source-tag">Source: Appropriations Schedule (Sheets 12&ndash;30)</p>
   </div>
 </section>
 
@@ -220,64 +305,124 @@
   </div>
 </section>
 
-<!-- ================= GLOSSARY ================= -->
-<section class="section" id="glossary">
-  <div class="container">
-    <div class="section-head">
-      <span class="eyebrow">Plain-English definitions</span>
-      <h2>Budget glossary</h2>
-      <p class="section-intro">
-        Municipal budgets use a lot of specialized terms. Flip a card to see
-        what each one means &mdash; or search and filter by topic.
-      </p>
-    </div>
-    <div class="filters">
-      <input type="search" id="glossary-search" placeholder="Search glossary terms&hellip;" />
-    </div>
-    <div class="gloss-pills" id="gloss-pills"></div>
-    <p class="results-note" id="glossary-count"></p>
-    <div class="gloss-card-grid" id="glossary-list"></div>
-  </div>
-</section>
-
-<!-- ================= ABOUT ================= -->
+<!-- ================= ABOUT / FAQ ================= -->
 <section class="section section--alt" id="about">
   <div class="container">
     <div class="section-head">
-      <span class="eyebrow">Methodology</span>
-      <h2>About this data</h2>
+      <span class="eyebrow">Methodology &amp; FAQ</span>
+      <h2>Frequently asked questions</h2>
+      <p class="section-intro">
+        Answers to the most common questions about where this data comes
+        from, what it does and doesn't cover, and how to verify it yourself.
+      </p>
     </div>
-    <div class="method-card">
-      <p>
-        Every figure on this page is transcribed directly from the
-        Township of West Windsor's <strong>adopted 2026 municipal
-        budget</strong> (Mercer County, NJ), as filed with the New Jersey
-        Division of Local Government Services.
-      </p>
-      <ul>
-        <li>Values are copied from the source workbook without recalculation.</li>
-        <li>Blank fields in the original budget are left blank here too &mdash; never replaced with zero.</li>
-        <li>Original department labels, FCOA codes, and source-sheet references are preserved for every row.</li>
-        <li>Spending totals shown in charts exclude the form's internal subtotal/total rows to avoid double-counting; the full Explorer table includes them, clearly labeled.</li>
-      </ul>
-      <div class="callout">
-        <strong>What about school taxes?</strong> This page covers only the
-        <strong>municipal</strong> budget &mdash; the township government's
-        own operations (police, roads, parks, etc.). School funding is a
-        separate budget set by the West Windsor-Plainsboro Regional School
-        District, and it's the largest part of most residents' property tax
-        bills: school taxes for 2025 totaled <strong>$111,688,841</strong>,
-        roughly twice the size of this entire municipal budget.
+
+    <div class="faq-facts">
+      <div class="faq-fact">
+        <span class="faq-fact-icon" aria-hidden="true">&#128196;</span>
+        <div>
+          <strong>Source</strong>
+          <span>Adopted 2026 Municipal Budget, Township of West Windsor (Mercer County, NJ)</span>
+        </div>
       </div>
-      <p style="margin-top:1rem;">
-        This tool is built and maintained by West Windsor Forward, a
-        nonpartisan civic organization. It is not an official Township of
-        West Windsor publication and does not replace the adopted budget
-        document.
-      </p>
-      <p>
-        <a href="data/budget.json" download>Download the underlying data (JSON)</a>
-      </p>
+      <div class="faq-fact">
+        <span class="faq-fact-icon" aria-hidden="true">&#127968;</span>
+        <div>
+          <strong>Scope</strong>
+          <span>Municipal government only &mdash; not school or county taxes</span>
+        </div>
+      </div>
+      <div class="faq-fact">
+        <span class="faq-fact-icon" aria-hidden="true">&#9989;</span>
+        <div>
+          <strong>Data integrity</strong>
+          <span>Every figure transcribed as printed, never recalculated</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-list">
+      <details class="faq-item" open>
+        <summary>
+          Where does this data come from?
+          <span class="faq-icon" aria-hidden="true"></span>
+        </summary>
+        <div class="faq-item-body">
+          <p>
+            Every figure on this page is transcribed directly from the
+            Township of West Windsor's <strong>adopted 2026 municipal
+            budget</strong>, as filed with the New Jersey Division of Local
+            Government Services. Original department labels, <span class="gloss-term" data-term="FCOA">FCOA</span><span class="gloss-term gloss-btn" data-term="FCOA" tabindex="0">?</span> codes,
+            and source-sheet references are preserved for every row so you
+            can look any number up in the source document yourself.
+          </p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>
+          Does this page change or recalculate any numbers?
+          <span class="faq-icon" aria-hidden="true"></span>
+        </summary>
+        <div class="faq-item-body">
+          <p>No. A few rules keep every figure faithful to the source workbook:</p>
+          <ul>
+            <li>Values are copied from the source workbook without recalculation.</li>
+            <li>Blank fields in the original budget are left blank here too &mdash; never replaced with zero.</li>
+            <li>Spending totals shown in charts exclude the form's internal subtotal/total rows to avoid double-counting; the full <a href="data.html">Data Tables</a> page includes them, clearly labeled.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>
+          What about school and county taxes?
+          <span class="faq-icon" aria-hidden="true"></span>
+        </summary>
+        <div class="faq-item-body">
+          <p>
+            This page covers only the <strong>municipal</strong> budget
+            &mdash; the township government's own operations (police, roads,
+            parks, etc.). School funding is a separate budget set by the West
+            Windsor-Plainsboro Regional School District, and it's the largest
+            part of most residents' property tax bills: school taxes for
+            2025 totaled <strong>$111,688,841</strong>, roughly twice the
+            size of this entire municipal budget. County taxes are set
+            separately by Mercer County and aren't included here either.
+          </p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>
+          Is this an official Township publication?
+          <span class="faq-icon" aria-hidden="true"></span>
+        </summary>
+        <div class="faq-item-body">
+          <p>
+            No. This tool is built and maintained by <strong>West Windsor
+            Forward</strong>, a nonpartisan civic organization. It is not an
+            official Township of West Windsor publication and does not
+            replace the adopted budget document &mdash; it's meant to make
+            that document easier to understand.
+          </p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>
+          Can I get the raw data myself?
+          <span class="faq-icon" aria-hidden="true"></span>
+        </summary>
+        <div class="faq-item-body">
+          <p>
+            Yes &mdash; every table behind this page is searchable on the
+            <a href="data.html">Data Tables page</a>, or you can
+            <a href="data/budget.json" download>download the underlying data as JSON</a>
+            and explore it yourself.
+          </p>
+        </div>
+      </details>
     </div>
   </div>
 </section>
