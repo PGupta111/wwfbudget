@@ -44,6 +44,33 @@ python3 -m http.server 8000
 
 Then open `http://localhost:8000`.
 
+### Deploy to Vercel
+
+The repo includes a root [`vercel.json`](../vercel.json) that deploys the
+static site in `Budget Visualizer/web/` with no build step and no dashboard
+configuration required:
+
+1. In Vercel, **Add New → Project** and import this Git repository.
+2. Leave every setting at its default and click **Deploy**. `vercel.json`
+   already sets the framework to "Other" (no build/install command) and
+   serves `Budget Visualizer/web` at the site root.
+
+Or from the repo root with the [Vercel CLI](https://vercel.com/docs/cli):
+
+```sh
+vercel        # preview deployment
+vercel --prod # production deployment
+```
+
+The config also adds long-lived, immutable caching for the vendored
+libraries and self-hosted fonts, a short cache for `data/budget.json`, and
+baseline security headers. Framing is intentionally left enabled so the page
+can still be embedded as an iframe on westwindsorforward.org.
+
+> If you'd rather configure Vercel by hand instead of using `vercel.json`,
+> set the project's **Root Directory** to `Budget Visualizer/web`,
+> **Framework Preset** to *Other*, and leave the build command empty.
+
 ### Data
 
 `web/data/budget.json` is a copy of [`src/data/budget.json`](src/data/budget.json),
