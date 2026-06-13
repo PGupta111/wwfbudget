@@ -1,9 +1,11 @@
 // Data Tables page — Explorer + Capital projects
 import { initExplorer, initCapital } from "./explorer.js";
 import { attachGlossaryTooltips } from "./glossary.js";
+import { initUI } from "./ui.js";
 import { loadBudget } from "./helpers.js";
 
 async function init() {
+  initUI();
   const data = await loadBudget();
   initExplorer(data);
   initCapital(data);

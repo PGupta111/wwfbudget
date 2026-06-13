@@ -2,6 +2,7 @@
 import { renderSankey, renderDonut } from "./charts.js";
 import { initCalculator } from "./calculator.js";
 import { attachGlossaryTooltips } from "./glossary.js";
+import { initUI } from "./ui.js";
 import {
   GROUP_DETAILS,
   REVENUE_DETAILS,
@@ -423,12 +424,51 @@ function renderSankeyDetail(data, node, total) {
   });
 }
 
+/** Count a compact-dollar value up from $0 when its element first scrolls
+ * into view (used for the hero figure and the featured headline stat). */
+function countUpCompact(el, target) {
+  if (!el) return;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduceMotion || !("IntersectionObserver" in window)) {
+    el.textContent = compactDollars(target);
+    return;
+  }
+  let played = false;
+  const run = () => {
+    played = true;
+    d3.select(el)
+      .transition()
+      .duration(1300)
+      .ease(d3.easeCubicOut)
+      .tween("text", () => {
+        const interp = d3.interpolateNumber(0, target);
+        return (t) => {
+          el.textContent = compactDollars(interp(t));
+        };
+      });
+  };
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting && !played) run();
+      });
+    },
+    { threshold: 0.4 }
+  );
+  observer.observe(el);
+}
+
 async function init() {
+  initUI();
   const data = await loadBudget();
 
   const total = data.headline.total_budget.amount;
   renderHeadlineStats(data);
   renderCaps(data);
+
+  // Animate the two big "total budget" figures up from zero.
+  countUpCompact(document.querySelector(".hero-figure-value"), total);
+  countUpCompact(document.querySelector(".stat-feature-value"), total);
 
   const revenueItems = getRevenueSources(data);
   const spendingItems = getSpendingByGroup(data);

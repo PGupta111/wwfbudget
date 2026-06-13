@@ -21,6 +21,19 @@ What's inside:
 - **Explorer** — searchable/filterable table of all 170 appropriation rows
 - **Capital projects** — 2026 funding and the 2026–2031 six-year program
 - **Glossary** — plain-English definitions, with inline tooltips
+- **Light & dark mode** — a header toggle that respects the visitor's
+  system preference and remembers their choice (charts re-color themselves)
+- **Scroll progress + active-section nav** and animated headline counters
+
+### Fully self-contained
+
+The site ships every dependency it needs, so it loads with no third-party
+network calls (good for privacy, performance, and offline/embedded use):
+
+- D3 and d3-sankey are vendored in [`web/js/vendor/`](web/js/vendor/)
+- The Inter and Lora webfonts are self-hosted in
+  [`web/assets/fonts/`](web/assets/fonts/) and declared in
+  [`web/css/fonts.css`](web/css/fonts.css)
 
 ### Run locally
 
