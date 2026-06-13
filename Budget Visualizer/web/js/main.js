@@ -3,6 +3,7 @@ import { renderSankey, renderDonut } from "./charts.js";
 import { initCalculator } from "./calculator.js";
 import { attachGlossaryTooltips } from "./glossary.js";
 import { initUI } from "./ui.js";
+import { initBudget3D, isWebGLAvailable } from "./viz3d.js";
 import {
   GROUP_DETAILS,
   REVENUE_DETAILS,
@@ -458,9 +459,109 @@ function countUpCompact(el, target) {
   observer.observe(el);
 }
 
+/** Wire up the interactive 3D stage: legend, camera controls, and the
+ * click-to-open detail panel. Falls back to a short message (and the 2D
+ * charts below) if WebGL can't start. */
+function initStage(data) {
+  const stage = document.getElementById("stage");
+  const fallback = document.getElementById("stage-fallback");
+  if (!stage) return;
+
+  if (!isWebGLAvailable()) {
+    if (fallback) fallback.hidden = false;
+    document.getElementById("budget-3d")?.remove();
+    return;
+  }
+
+  const spending = getSpendingByGroup(data);
+
+  let viz;
+  try {
+    viz = initBudget3D(data, { onSelect: showPanel });
+  } catch (err) {
+    console.error("3D stage failed:", err);
+    if (fallback) fallback.hidden = false;
+    document.getElementById("budget-3d")?.remove();
+    return;
+  }
+  if (!viz) {
+    if (fallback) fallback.hidden = false;
+    return;
+  }
+
+  // Legend — hovering/clicking a chip mirrors onto the 3D columns.
+  const legend = document.getElementById("stage-legend");
+  if (legend) {
+    legend.innerHTML = spending
+      .map(
+        (g) => `
+        <button type="button" class="stage-legend-item" data-group="${g.group.replace(/"/g, "&quot;")}">
+          <span class="stage-legend-swatch" style="background:${g.color}"></span>
+          ${g.group}
+        </button>`
+      )
+      .join("");
+    const items = [...legend.querySelectorAll(".stage-legend-item")];
+    items.forEach((item) => {
+      const name = item.dataset.group;
+      item.addEventListener("mouseenter", () => viz.hoverGroup(name));
+      item.addEventListener("mouseleave", () => viz.hoverGroup(null));
+      item.addEventListener("click", () => {
+        items.forEach((b) => b.classList.remove("is-active"));
+        item.classList.add("is-active");
+        viz.focusGroup(name);
+      });
+    });
+  }
+
+  // Rotation toggle + reset.
+  const rotateBtn = document.getElementById("stage-rotate");
+  rotateBtn?.addEventListener("click", () => {
+    const on = viz.toggleRotate();
+    rotateBtn.setAttribute("aria-pressed", String(on));
+    rotateBtn.lastChild.textContent = on ? " Pause rotation" : " Resume rotation";
+  });
+  document.getElementById("stage-reset")?.addEventListener("click", () => {
+    viz.resetView();
+    document.querySelectorAll(".stage-legend-item.is-active").forEach((b) => b.classList.remove("is-active"));
+  });
+
+  // Detail panel.
+  const panel = document.getElementById("stage-panel");
+  const body = document.getElementById("stage-panel-body");
+  document.getElementById("stage-panel-close")?.addEventListener("click", () => {
+    viz.resetView();
+    document.querySelectorAll(".stage-legend-item.is-active").forEach((b) => b.classList.remove("is-active"));
+  });
+
+  function showPanel(detail) {
+    if (!panel || !body) return;
+    if (!detail) {
+      panel.classList.remove("is-open");
+      return;
+    }
+    body.innerHTML = `
+      <span class="stage-panel-eyebrow" style="background:${detail.colorHex}">Spending category</span>
+      <h3>${detail.group}</h3>
+      <div class="stage-panel-amount" style="color:${detail.colorHex}">${dollars(detail.amount, 0)}</div>
+      <div class="stage-panel-sub">${detail.pct.toFixed(1)}% of the 2026 municipal budget</div>
+      ${detail.blurb ? `<p class="stage-panel-blurb">${detail.blurb}</p>` : ""}
+      ${
+        detail.breakdown.length
+          ? `<div class="stage-panel-bd-title">Where it goes</div>
+             ${detail.breakdown
+               .map((b) => `<div class="stage-bd-row"><span>${b.label}</span><span>${dollars(b.amount, 0)}</span></div>`)
+               .join("")}`
+          : ""
+      }`;
+    panel.classList.add("is-open");
+  }
+}
+
 async function init() {
   initUI();
   const data = await loadBudget();
+  initStage(data);
 
   const total = data.headline.total_budget.amount;
   renderHeadlineStats(data);

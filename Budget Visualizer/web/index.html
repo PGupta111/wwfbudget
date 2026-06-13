@@ -10,6 +10,14 @@
 <meta name="color-scheme" content="light dark" />
 <link rel="stylesheet" href="css/fonts.css" />
 <link rel="stylesheet" href="css/styles.css" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "./js/vendor/three/three.module.min.js",
+    "three/addons/": "./js/vendor/three/addons/"
+  }
+}
+</script>
 <script>
   // Apply the saved (or system) theme before first paint to avoid a flash.
   (function () {
@@ -99,6 +107,50 @@
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ================= 3D STAGE ================= -->
+<section class="stage" id="stage">
+  <canvas id="budget-3d"></canvas>
+  <div class="stage-labels" id="stage-labels"></div>
+  <div class="stage-grain" aria-hidden="true"></div>
+
+  <div class="stage-ui">
+    <div class="stage-head">
+      <span class="stage-eyebrow">Interactive&nbsp;3D &middot; WebGL</span>
+      <h2>Your tax dollars, in three dimensions</h2>
+      <p>
+        Each glowing column is one slice of the 2026 municipal budget &mdash;
+        taller and brighter means more money. Light streams from the budget
+        core out to where it&rsquo;s spent. <strong>Drag</strong> to orbit,
+        <strong>scroll</strong> to zoom, and <strong>hover or tap</strong> a
+        column for the details.
+      </p>
+      <div class="stage-actions">
+        <button type="button" class="stage-btn" id="stage-rotate" aria-pressed="true">
+          <span class="stage-btn-dot"></span> Pause rotation
+        </button>
+        <button type="button" class="stage-btn" id="stage-reset">Reset view</button>
+        <a class="stage-btn stage-btn--ghost" href="#flow">See the 2D flow &rarr;</a>
+      </div>
+    </div>
+
+    <div class="stage-legend" id="stage-legend"></div>
+
+    <aside class="stage-panel" id="stage-panel" aria-live="polite">
+      <button type="button" class="stage-panel-close" id="stage-panel-close" aria-label="Close details">&times;</button>
+      <div class="stage-panel-body" id="stage-panel-body"></div>
+    </aside>
+  </div>
+
+  <div class="stage-tooltip" id="stage-tooltip"></div>
+
+  <div class="stage-fallback" id="stage-fallback" hidden>
+    <p>
+      Your browser couldn&rsquo;t start the 3D view, but every figure is still
+      below as interactive 2D charts and tables.
+    </p>
   </div>
 </section>
 
