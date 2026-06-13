@@ -6,9 +6,20 @@
 <title>2026 Budget Visualizer | West Windsor Forward</title>
 <meta name="description" content="A resident-friendly guide to West Windsor Township's 2026 adopted municipal budget." />
 <link rel="icon" href="assets/favicon.ico" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+<meta name="theme-color" content="#082f49" />
+<meta name="color-scheme" content="light dark" />
+<link rel="stylesheet" href="css/fonts.css" />
 <link rel="stylesheet" href="css/styles.css" />
+<script>
+  // Apply the saved (or system) theme before first paint to avoid a flash.
+  (function () {
+    try {
+      var saved = localStorage.getItem("wwf-theme");
+      var theme = saved || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    } catch (e) {}
+  })();
+</script>
 </head>
 <body>
 
@@ -28,8 +39,13 @@
       <a href="#calculator">Your Share</a>
       <a href="#about">FAQ</a>
       <a href="data.html" class="nav-cta">Data</a>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"></circle><g><line x1="12" y1="2.5" x2="12" y2="5"></line><line x1="12" y1="19" x2="12" y2="21.5"></line><line x1="2.5" y1="12" x2="5" y2="12"></line><line x1="19" y1="12" x2="21.5" y2="12"></line><line x1="5.1" y1="5.1" x2="6.9" y2="6.9"></line><line x1="17.1" y1="17.1" x2="18.9" y2="18.9"></line><line x1="5.1" y1="18.9" x2="6.9" y2="17.1"></line><line x1="17.1" y1="6.9" x2="18.9" y2="5.1"></line></g></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg>
+      </button>
     </nav>
   </div>
+  <div class="scroll-progress" id="scroll-progress" aria-hidden="true"></div>
 </header>
 
 <section class="hero" id="top">
@@ -446,8 +462,8 @@
 
 <div class="sankey-tooltip" id="sankey-tooltip"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12/dist/d3-sankey.min.js"></script>
+<script src="js/vendor/d3.min.js"></script>
+<script src="js/vendor/d3-sankey.min.js"></script>
 <script src="js/main.js" type="module"></script>
 </body>
 </html>

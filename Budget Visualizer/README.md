@@ -21,6 +21,19 @@ What's inside:
 - **Explorer** — searchable/filterable table of all 170 appropriation rows
 - **Capital projects** — 2026 funding and the 2026–2031 six-year program
 - **Glossary** — plain-English definitions, with inline tooltips
+- **Light & dark mode** — a header toggle that respects the visitor's
+  system preference and remembers their choice (charts re-color themselves)
+- **Scroll progress + active-section nav** and animated headline counters
+
+### Fully self-contained
+
+The site ships every dependency it needs, so it loads with no third-party
+network calls (good for privacy, performance, and offline/embedded use):
+
+- D3 and d3-sankey are vendored in [`web/js/vendor/`](web/js/vendor/)
+- The Inter and Lora webfonts are self-hosted in
+  [`web/assets/fonts/`](web/assets/fonts/) and declared in
+  [`web/css/fonts.css`](web/css/fonts.css)
 
 ### Run locally
 
@@ -30,6 +43,33 @@ python3 -m http.server 8000
 ```
 
 Then open `http://localhost:8000`.
+
+### Deploy to Vercel
+
+The repo includes a root [`vercel.json`](../vercel.json) that deploys the
+static site in `Budget Visualizer/web/` with no build step and no dashboard
+configuration required:
+
+1. In Vercel, **Add New → Project** and import this Git repository.
+2. Leave every setting at its default and click **Deploy**. `vercel.json`
+   already sets the framework to "Other" (no build/install command) and
+   serves `Budget Visualizer/web` at the site root.
+
+Or from the repo root with the [Vercel CLI](https://vercel.com/docs/cli):
+
+```sh
+vercel        # preview deployment
+vercel --prod # production deployment
+```
+
+The config also adds long-lived, immutable caching for the vendored
+libraries and self-hosted fonts, a short cache for `data/budget.json`, and
+baseline security headers. Framing is intentionally left enabled so the page
+can still be embedded as an iframe on westwindsorforward.org.
+
+> If you'd rather configure Vercel by hand instead of using `vercel.json`,
+> set the project's **Root Directory** to `Budget Visualizer/web`,
+> **Framework Preset** to *Other*, and leave the build command empty.
 
 ### Data
 
