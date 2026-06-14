@@ -2785,3 +2785,206 @@ body {
 @media (max-width: 760px) {
   .stage-modes { width: 100%; overflow-x: auto; }
 }
+
+/* ============================================================
+   PREMIUM LAYER — cohesive product polish across the whole page.
+   Additive; sits on top of the base + theme styles above.
+   ============================================================ */
+
+/* ---- Scroll-reveal ---- */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+[data-reveal].in-view {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] { opacity: 1; transform: none; transition: none; }
+}
+
+/* ---- Ambient page background ---- */
+[data-theme="dark"] body {
+  background:
+    radial-gradient(58% 48% at 10% -6%, rgba(56, 189, 248, 0.1), transparent 60%),
+    radial-gradient(52% 46% at 96% 4%, rgba(139, 92, 246, 0.1), transparent 56%),
+    var(--paper);
+  background-attachment: fixed;
+}
+body {
+  background:
+    radial-gradient(60% 50% at 8% -8%, rgba(14, 165, 233, 0.06), transparent 58%),
+    var(--paper);
+  background-attachment: fixed;
+}
+
+/* ---- Section rhythm ---- */
+.section { padding: clamp(3rem, 7vw, 5.5rem) 0; }
+
+.section-head .eyebrow,
+.hero .eyebrow {
+  position: relative;
+  padding-left: 2.4rem;
+}
+.section-head .eyebrow::before,
+.hero .eyebrow::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 1.9rem;
+  height: 2px;
+  transform: translateY(-50%);
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--brand-500), transparent);
+}
+
+/* ---- Premium cards: hairline + hover lift + glow ---- */
+.stat-card,
+.donut-feature,
+.yoy-card,
+.cap-card,
+.faq-fact,
+.calc-card,
+.breakdown-list,
+.sankey-card,
+.faq-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::after,
+.donut-feature::after,
+.cap-card::after,
+.calc-card::after,
+.breakdown-list::after,
+.sankey-card::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.55), transparent);
+  opacity: 0.7;
+}
+
+.stat-card,
+.donut-feature,
+.yoy-card,
+.cap-card,
+.faq-fact {
+  transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1), border-color 280ms ease,
+    box-shadow 280ms ease, background-color 350ms ease;
+}
+
+.stat-card:hover,
+.donut-feature:hover,
+.yoy-card:hover,
+.cap-card:hover,
+.faq-fact:hover {
+  transform: translateY(-4px);
+  border-color: rgba(56, 189, 248, 0.45);
+  box-shadow: 0 18px 44px rgba(2, 8, 20, 0.5);
+}
+
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .donut-feature,
+[data-theme="dark"] .yoy-card,
+[data-theme="dark"] .cap-card,
+[data-theme="dark"] .faq-fact,
+[data-theme="dark"] .calc-card,
+[data-theme="dark"] .breakdown-list,
+[data-theme="dark"] .sankey-card,
+[data-theme="dark"] .faq-item {
+  background: linear-gradient(180deg, rgba(28, 41, 66, 0.55), rgba(17, 26, 44, 0.85));
+}
+
+/* ---- Hero: cinematic depth ---- */
+.hero { position: relative; overflow: hidden; }
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(40% 60% at 78% 30%, rgba(56, 189, 248, 0.16), transparent 60%),
+    radial-gradient(36% 50% at 14% 90%, rgba(139, 92, 246, 0.12), transparent 60%);
+}
+.hero .container { position: relative; z-index: 1; }
+
+.hero-figure {
+  box-shadow: 0 18px 50px rgba(2, 8, 20, 0.45);
+}
+
+/* Hero panel: animated sheen */
+.hero-panel::after {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(255, 255, 255, 0.06) 40deg, transparent 90deg);
+  animation: hero-sheen 14s linear infinite;
+  pointer-events: none;
+}
+@keyframes hero-sheen { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .hero-panel::after { animation: none; } }
+
+/* ---- Gradient primary buttons ---- */
+.btn-primary {
+  background: linear-gradient(135deg, var(--brand-500), var(--brand-700));
+  border-color: transparent;
+  box-shadow: 0 8px 24px rgba(14, 165, 233, 0.28);
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, var(--brand-300), var(--brand-500));
+  border-color: transparent;
+  transform: translateY(-1px);
+}
+
+/* ---- Headline feature card glow ---- */
+.stat-feature {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 18px 48px rgba(3, 105, 161, 0.35);
+}
+.stat-feature::after {
+  content: "";
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  right: -60px;
+  top: -80px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.18), transparent 70%);
+  pointer-events: none;
+}
+
+/* ---- Section divider glow between major sections ---- */
+.section--alt {
+  position: relative;
+}
+[data-theme="dark"] .section--alt::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.4), transparent);
+}
+
+/* ---- Footer polish ---- */
+.site-footer {
+  position: relative;
+  background: linear-gradient(180deg, #060b18, #0a1326);
+}
+.site-footer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--brand-700), var(--brand-500), var(--brand-300));
+}

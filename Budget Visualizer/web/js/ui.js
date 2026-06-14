@@ -29,19 +29,66 @@ export function initTheme() {
     }
     reflect(next);
   });
+}
 
-  // Follow the OS preference if the visitor hasn't explicitly chosen.
-  const media = window.matchMedia("(prefers-color-scheme: dark)");
-  media.addEventListener?.("change", (e) => {
-    let saved = null;
-    try {
-      saved = localStorage.getItem("wwf-theme");
-    } catch (err) {}
-    if (saved) return;
-    const theme = e.matches ? "dark" : "light";
-    root.setAttribute("data-theme", theme);
-    reflect(theme);
+/** Reveal sections and cards as they scroll into view (once each).
+ * Uses a scroll/resize check rather than IntersectionObserver so that fast
+ * scrolling or anchor jumps can never leave an element stuck hidden. */
+export function initReveals() {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const selectors = [
+    ".section-head",
+    ".stats-grid",
+    ".donut-grid",
+    ".donut-hint",
+    ".yoy-total",
+    ".yoy-grid",
+    ".caps-grid",
+    ".calculator-grid",
+    ".table-wrap",
+    ".faq-facts",
+    ".faq-list",
+    ".callout",
+    ".sankey-card",
+    ".filters",
+  ];
+  let remaining = [];
+  document.querySelectorAll(selectors.join(",")).forEach((el) => {
+    if (el.closest("#stage")) return; // the 3D stage animates itself
+    el.setAttribute("data-reveal", "");
+    remaining.push(el);
   });
+  if (!remaining.length) return;
+
+  const check = () => {
+    const trigger = window.innerHeight * 0.9;
+    remaining = remaining.filter((el) => {
+      if (el.getBoundingClientRect().top < trigger) {
+        el.classList.add("in-view");
+        return false;
+      }
+      return true;
+    });
+    if (!remaining.length) {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    }
+  };
+
+  let ticking = false;
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      check();
+      ticking = false;
+    });
+  }
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll);
+  check(); // reveal anything already in view on load
 }
 
 /** Thin gradient bar under the header that fills as the page is scrolled. */
@@ -104,4 +151,5 @@ export function initUI() {
   initTheme();
   initScrollProgress();
   initScrollSpy();
+  initReveals();
 }
