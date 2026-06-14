@@ -3254,7 +3254,16 @@ thead th {
    re-specs the panels as real frosted glass with a lit rim.
    ============================================================ */
 
-/* ---- Refined blue palette ---- */
+/* ---- Refined blue palette ---- (light defaults first, dark second) */
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.52);
+  --glass-bg-2: rgba(255, 255, 255, 0.74);
+  --glass-rim: rgba(255, 255, 255, 0.95);
+  --glass-edge: rgba(255, 255, 255, 0.8);
+  --glass-blur: 16px;
+  --glass-shadow: 0 18px 44px rgba(15, 23, 42, 0.12);
+}
+
 [data-theme="dark"] {
   --ink: #eaf1fb;
   --ink-soft: #a7b8d4;
@@ -3269,15 +3278,6 @@ thead th {
   --glass-edge: rgba(255, 255, 255, 0.12);
   --glass-blur: 22px;
   --glass-shadow: 0 26px 64px rgba(2, 7, 20, 0.6);
-}
-
-:root {
-  --glass-bg: rgba(255, 255, 255, 0.52);
-  --glass-bg-2: rgba(255, 255, 255, 0.74);
-  --glass-rim: rgba(255, 255, 255, 0.95);
-  --glass-edge: rgba(255, 255, 255, 0.8);
-  --glass-blur: 16px;
-  --glass-shadow: 0 18px 44px rgba(15, 23, 42, 0.12);
 }
 
 /* ---- The fixed color field (the thing the glass blurs) ---- */
@@ -3379,3 +3379,91 @@ body::after {
 .source-tag {
   background: var(--glass-bg-2);
 }
+
+/* ============================================================
+   CLEAN MODERN FINISH  (overrides the heavy glass experiments)
+   Calm background, readable near-solid panels, crisp borders,
+   high-contrast text. Glass becomes a subtle accent, not a fog.
+   ============================================================ */
+
+/* Remove the film-grain / grid overlay that read as dated + muddy. */
+body::after { display: none !important; }
+
+/* Calm, restrained background. */
+[data-theme="dark"] body { background: #0a0f1b; }
+body { background: #eef2f8; }
+body::before {
+  z-index: -2;
+  opacity: 1;
+  background:
+    radial-gradient(72% 48% at 50% -12%, rgba(56, 189, 248, 0.1), transparent 62%),
+    radial-gradient(48% 40% at 92% 6%, rgba(99, 102, 241, 0.08), transparent 60%),
+    radial-gradient(46% 42% at 6% 96%, rgba(45, 212, 191, 0.06), transparent 60%);
+}
+[data-theme="light"] body::before { opacity: 0.6; }
+
+/* Higher-contrast text. */
+:root {
+  --panel: rgba(255, 255, 255, 0.92);
+  --panel-border: rgba(15, 23, 42, 0.1);
+  --panel-hover: rgba(14, 165, 233, 0.45);
+}
+[data-theme="dark"] {
+  --ink: #eef3fb;
+  --ink-soft: #aebcd6;
+  --ink-faint: #7587a6;
+  --panel: rgba(17, 25, 43, 0.88);
+  --panel-border: rgba(162, 188, 230, 0.16);
+  --panel-hover: rgba(120, 170, 240, 0.4);
+}
+
+/* Readable panels: near-solid surface, crisp border, light frost, soft lift. */
+.stat-card,
+.donut-feature,
+.yoy-card,
+.cap-card,
+.faq-fact,
+.faq-item,
+.calc-card,
+.breakdown-list,
+.sankey-card,
+.table-wrap,
+.callout,
+.hero-figure,
+.donut-other-list,
+.filters {
+  background: var(--panel) !important;
+  border: 1px solid var(--panel-border) !important;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.26) !important;
+}
+
+.stat-card:hover,
+.donut-feature:hover,
+.yoy-card:hover,
+.cap-card:hover,
+.faq-fact:hover {
+  border-color: var(--panel-hover) !important;
+}
+
+/* Calm section + hero + Sankey backgrounds (no bright wash behind panels). */
+[data-theme="dark"] .section--alt {
+  background: rgba(255, 255, 255, 0.022);
+  border-top-color: var(--panel-border);
+  border-bottom-color: var(--panel-border);
+}
+.section--alt { background: rgba(255, 255, 255, 0.55); }
+
+[data-theme="dark"] .hero {
+  background: linear-gradient(180deg, rgba(16, 27, 50, 0.72) 0%, rgba(10, 15, 27, 0) 100%);
+}
+[data-theme="dark"] .sankey-card--full { background: rgba(15, 22, 40, 0.55) !important; }
+
+/* Solid, readable chips. */
+.section-head .eyebrow::before,
+.source-tag { background: rgba(255, 255, 255, 0.04); }
+[data-theme="light"] .section-head .eyebrow::before,
+[data-theme="light"] .source-tag { background: rgba(15, 23, 42, 0.04); }
+
+thead th { background: var(--panel) !important; }
