@@ -27,8 +27,8 @@ import {
   REVENUE_DETAILS,
 } from "./helpers.js";
 
-const BG_TOP = "#0c1730";
-const BG_BOTTOM = "#060b18";
+const BG_TOP = "#3c618f";
+const BG_BOTTOM = "#16294a";
 
 export function isWebGLAvailable() {
   try {
@@ -118,7 +118,7 @@ export function initBudget3D(data, opts = {}) {
 
   const scene = new THREE.Scene();
   scene.background = makeBackgroundTexture(BG_TOP, BG_BOTTOM);
-  scene.fog = new THREE.FogExp2(0x070d1c, 0.017);
+  scene.fog = new THREE.FogExp2(0x21406e, 0.012);
 
   const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 200);
   // Per-mode "home" camera framing.
@@ -139,8 +139,8 @@ export function initBudget3D(data, opts = {}) {
   controls.autoRotateSpeed = 0.5;
 
   // ---- Lighting / ground (persistent) --------------------------------------
-  scene.add(new THREE.HemisphereLight(0x9ecbff, 0x0a1020, 0.55));
-  scene.add(new THREE.AmbientLight(0xffffff, 0.18));
+  scene.add(new THREE.HemisphereLight(0xd2e6ff, 0x16294a, 0.8));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.32));
 
   const key = new THREE.DirectionalLight(0xffffff, 2.1);
   key.position.set(10, 20, 12);
@@ -164,15 +164,15 @@ export function initBudget3D(data, opts = {}) {
 
   const ground = new THREE.Mesh(
     new THREE.CircleGeometry(60, 96),
-    new THREE.MeshStandardMaterial({ color: 0x0a1224, roughness: 0.82, metalness: 0.2 })
+    new THREE.MeshStandardMaterial({ color: 0x223d68, roughness: 0.8, metalness: 0.18 })
   );
   ground.rotation.x = -Math.PI / 2;
   ground.receiveShadow = true;
   scene.add(ground);
 
-  const grid = new THREE.PolarGridHelper(20, 16, 8, 96, 0x1f3a63, 0x152844);
+  const grid = new THREE.PolarGridHelper(20, 16, 8, 96, 0x5a82b8, 0x3a5887);
   grid.material.transparent = true;
-  grid.material.opacity = 0.5;
+  grid.material.opacity = 0.45;
   grid.position.y = 0.01;
   scene.add(grid);
 
@@ -404,7 +404,7 @@ export function initBudget3D(data, opts = {}) {
   // ---- Post-processing -----------------------------------------------------
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.62, 0.55, 0.82);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.5, 0.5, 0.85);
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
 

@@ -3636,3 +3636,56 @@ thead th { background: var(--panel) !important; }
 [data-theme="dark"] .hero {
   background: linear-gradient(180deg, rgba(23, 38, 70, 0.6) 0%, rgba(10, 19, 34, 0) 100%);
 }
+
+/* ============================================================
+   FINISH: blue-led chart palette, stage blend, tighter rhythm
+   ============================================================ */
+
+/* ---- Curated blue-led categorical palette (institutional) ----
+   The largest functional groups resolve to cohesive blues/teals;
+   only small categories use a warm/violet accent. */
+:root {
+  --grp-1: #0c4a6e;  /* General Government — navy */
+  --grp-2: #38bdf8;  /* Shared Services — light sky */
+  --grp-3: #0ea5e9;  /* Public Works — sky */
+  --grp-4: #06b6d4;  /* Health — cyan */
+  --grp-5: #22d3ee;  /* Recreation — bright cyan */
+  --grp-6: #0891b2;  /* Pensions — deep cyan */
+  --grp-7: #0d9488;  /* Insurance — teal */
+  --grp-8: #f59e0b;  /* Capital — amber accent */
+  --grp-9: #1d4ed8;  /* Public Safety (largest) — strong blue */
+  --grp-10: #7c3aed; /* Grants — violet accent */
+  --grp-11: #2dd4bf; /* Land Use — teal-green */
+  --grp-12: #4f46e5; /* Debt Service — indigo */
+  --grp-13: #64748b; /* Reserve — slate */
+}
+
+/* ---- Stage: lighter blue scene that blends into the page ---- */
+:root { --stage-fade: #eef3fa; }
+[data-theme="dark"] { --stage-fade: #0a1322; }
+
+.stage {
+  background: linear-gradient(180deg, #3c618f 0%, #20396188 40%, #16294a 100%) !important;
+}
+.stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    var(--stage-fade) 0%,
+    rgba(0, 0, 0, 0) 13%,
+    rgba(0, 0, 0, 0) 87%,
+    var(--stage-fade) 100%
+  );
+}
+
+/* ---- Tighter, more generous type rhythm ---- */
+h1 { font-size: clamp(2.4rem, 5.2vw, 4rem); }
+.hero h1 { max-width: 17ch; margin-bottom: 1.1rem; }
+.section-head { margin-bottom: 2.6rem; max-width: 64ch; }
+.section-head h2 { font-size: clamp(1.7rem, 3.4vw, 2.5rem); margin-bottom: 0.7rem; }
+.section-head .eyebrow { margin-bottom: 0.9rem; }
+.section-intro { font-size: 1.05rem; line-height: 1.65; }
