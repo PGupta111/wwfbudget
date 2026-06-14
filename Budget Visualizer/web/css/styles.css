@@ -10,14 +10,16 @@
   --card: #ffffff;
   --line: #e2e8f0;
 
-  --brand-900: #082f49;
+  --brand-900: #0c4a6e;
   --brand-700: #0369a1;
   --brand-500: #0ea5e9;
   --brand-300: #7dd3fc;
   --brand-100: #e0f2fe;
 
-  --good: #15803d;
-  --good-bg: #ecfdf5;
+  --teal: #0d9488;
+
+  --good: #0f766e;
+  --good-bg: #ccfbf1;
 
   --bg-soft: #eef2f7;
 
@@ -30,8 +32,9 @@
 
   --container: 1180px;
 
-  --font-display: "Lora", Georgia, "Times New Roman", serif;
+  --font-display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-accent: "Lora", Georgia, "Times New Roman", serif;
 
   /* 13-color categorical palette for functional groups, ordered to roughly
      match spending size for visual variety (blues/teals -> greens -> warm) */
@@ -2312,3 +2315,1377 @@ body {
 [data-theme="dark"] .cap-card .cap-value {
   color: #86efac;
 }
+
+/* ============================================================
+   3D STAGE — the interactive WebGL centerpiece
+   Always cinematic/dark regardless of the page theme.
+   ============================================================ */
+
+.stage {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  height: min(88vh, 920px);
+  min-height: 580px;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 50% 0%, #102243 0%, #0a1530 45%, #060b18 100%);
+  border-top: 1px solid rgba(56, 189, 248, 0.18);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.18);
+  isolation: isolate;
+}
+
+#budget-3d {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: grab;
+  touch-action: none;
+  z-index: 1;
+}
+
+/* Soft vignette + faint scanline grain for a "render" feel */
+.stage-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(130% 100% at 50% 35%, transparent 55%, rgba(3, 7, 18, 0.55) 100%);
+  mix-blend-mode: multiply;
+}
+
+.stage-labels {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.stage-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0.12rem 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #f1f5f9;
+  background: rgba(8, 15, 30, 0.62);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-left-width: 3px;
+  border-radius: 6px;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+  font-variant-numeric: tabular-nums;
+  transition: opacity 200ms ease;
+  will-change: transform, opacity;
+}
+
+.stage-label.is-active {
+  background: rgba(8, 15, 30, 0.92);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.5), 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.stage-ui {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  padding: clamp(1.1rem, 3vw, 2.4rem);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+/* Soft scrim anchoring the overlay text over the bright scene */
+.stage-ui::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(118deg, rgba(5, 10, 22, 0.78) 0%, rgba(5, 10, 22, 0.32) 36%, transparent 60%);
+}
+
+@media (max-width: 760px) {
+  .stage-ui::before {
+    background: linear-gradient(180deg, rgba(5, 10, 22, 0.82) 0%, rgba(5, 10, 22, 0.3) 42%, transparent 62%);
+  }
+}
+
+.stage-head {
+  pointer-events: none;
+  max-width: 38ch;
+}
+
+.stage-eyebrow {
+  display: inline-block;
+  pointer-events: auto;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #7dd3fc;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 999px;
+  background: rgba(8, 15, 30, 0.45);
+  backdrop-filter: blur(6px);
+}
+
+.stage-head h2 {
+  color: #f8fafc;
+  margin: 0.9rem 0 0.5rem;
+  font-size: clamp(1.6rem, 3.4vw, 2.6rem);
+  text-shadow: 0 2px 30px rgba(0, 0, 0, 0.5);
+}
+
+.stage-head p {
+  color: #c5d3e6;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0 0 1rem;
+  text-shadow: 0 1px 16px rgba(0, 0, 0, 0.5);
+}
+
+.stage-head strong { color: #e8f3ff; }
+
+.stage-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  pointer-events: auto;
+}
+
+.stage-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #e8f3ff;
+  text-decoration: none;
+  padding: 0.5rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  background: rgba(12, 22, 42, 0.55);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.stage-btn:hover {
+  background: rgba(30, 58, 99, 0.7);
+  border-color: rgba(56, 189, 248, 0.6);
+  transform: translateY(-1px);
+}
+
+.stage-btn-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #4ade80;
+  box-shadow: 0 0 8px #4ade80;
+}
+
+.stage-btn[aria-pressed="false"] .stage-btn-dot {
+  background: #f59e0b;
+  box-shadow: 0 0 8px #f59e0b;
+}
+
+.stage-btn--ghost { background: transparent; }
+
+.stage-legend {
+  align-self: end;
+  justify-self: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  max-width: min(760px, 100%);
+  pointer-events: auto;
+}
+
+.stage-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #d7e2f2;
+  padding: 0.28rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(8, 15, 30, 0.5);
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.stage-legend-item:hover,
+.stage-legend-item.is-active {
+  background: rgba(30, 58, 99, 0.75);
+  border-color: rgba(56, 189, 248, 0.55);
+  transform: translateY(-1px);
+}
+
+.stage-legend-swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  flex: none;
+}
+
+/* Floating tooltip following the pointer */
+.stage-tooltip {
+  position: absolute;
+  z-index: 6;
+  top: 0;
+  left: 0;
+  transform: translate(-50%, calc(-100% - 16px));
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 180px;
+  max-width: 280px;
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
+  background: rgba(9, 16, 32, 0.92);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  color: #f1f5f9;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+
+.stage-tooltip.visible { opacity: 1; }
+
+.stage-tooltip .t3d-swatch {
+  width: 22px;
+  height: 4px;
+  border-radius: 999px;
+  margin-bottom: 0.2rem;
+}
+
+.stage-tooltip .t3d-name { font-weight: 700; font-size: 0.92rem; }
+.stage-tooltip .t3d-amount {
+  font-size: 0.78rem;
+  color: #9fb6d4;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Right-side detail panel */
+.stage-panel {
+  position: absolute;
+  top: 50%;
+  right: clamp(1rem, 3vw, 2.4rem);
+  transform: translateY(-50%) translateX(20px);
+  width: min(340px, calc(100% - 2rem));
+  max-height: 80%;
+  overflow-y: auto;
+  z-index: 6;
+  padding: 1.3rem 1.4rem;
+  border-radius: 16px;
+  background: rgba(9, 16, 32, 0.86);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(14px);
+  color: #e8f0fb;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 280ms ease, transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.stage-panel.is-open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
+  pointer-events: auto;
+}
+
+.stage-panel-close {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.7rem;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(148, 163, 184, 0.15);
+  color: #cbd5e1;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+.stage-panel-close:hover { background: rgba(148, 163, 184, 0.3); color: #fff; }
+
+.stage-panel-eyebrow {
+  display: inline-block;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  color: #0a1020;
+}
+
+.stage-panel h3 {
+  color: #f8fafc;
+  margin: 0.7rem 0 0.2rem;
+  font-size: 1.25rem;
+}
+
+.stage-panel-amount {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  margin: 0.1rem 0 0.1rem;
+}
+
+.stage-panel-sub {
+  font-size: 0.8rem;
+  color: #93a7c4;
+  margin-bottom: 0.8rem;
+}
+
+.stage-panel p.stage-panel-blurb {
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: #c5d3e6;
+  margin: 0 0 0.9rem;
+}
+
+.stage-panel-bd-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7e93b3;
+  margin-bottom: 0.4rem;
+}
+
+.stage-bd-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.82rem;
+  padding: 0.32rem 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+}
+.stage-bd-row span:last-child {
+  color: #9fb6d4;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.stage-fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  text-align: center;
+  color: #c5d3e6;
+}
+.stage-fallback[hidden] { display: none; }
+.stage-fallback p { max-width: 40ch; font-size: 1rem; }
+
+@media (max-width: 760px) {
+  .stage {
+    height: 78vh;
+    min-height: 520px;
+  }
+  .stage-head { max-width: 100%; }
+  .stage-legend {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    max-width: 100%;
+    padding-bottom: 0.3rem;
+    -webkit-overflow-scrolling: touch;
+  }
+  .stage-legend-item { white-space: nowrap; }
+  .stage-panel {
+    top: auto;
+    bottom: 0.8rem;
+    right: 0.8rem;
+    left: 0.8rem;
+    width: auto;
+    transform: translateY(20px);
+    max-height: 56%;
+  }
+  .stage-panel.is-open { transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage-btn-dot { box-shadow: none; }
+}
+
+/* ---- 3D stage: view-mode switcher + tour button ---- */
+.stage-modes {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin: 0 0 0.7rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: rgba(8, 15, 30, 0.55);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  backdrop-filter: blur(8px);
+  pointer-events: auto;
+}
+
+.stage-mode {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #c5d3e6;
+  border: none;
+  background: transparent;
+  padding: 0.42rem 0.85rem;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.stage-mode:hover { color: #fff; }
+
+.stage-mode.is-active {
+  color: #04121f;
+  background: linear-gradient(135deg, #7dd3fc, #38bdf8);
+  box-shadow: 0 4px 16px rgba(56, 189, 248, 0.35);
+}
+
+.stage-btn--accent {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.9), rgba(14, 165, 233, 0.9));
+  border-color: transparent;
+  color: #04121f;
+  font-weight: 700;
+}
+.stage-btn--accent:hover {
+  background: linear-gradient(135deg, #7dd3fc, #38bdf8);
+  border-color: transparent;
+}
+.stage-btn--accent.is-touring {
+  background: rgba(12, 22, 42, 0.7);
+  color: #e8f3ff;
+  border: 1px solid rgba(245, 158, 11, 0.6);
+}
+.stage-tour-icon { font-size: 0.7rem; }
+.stage-btn--accent.is-touring .stage-tour-icon { display: none; }
+
+@media (max-width: 760px) {
+  .stage-modes { width: 100%; overflow-x: auto; }
+}
+
+/* ============================================================
+   PREMIUM LAYER — cohesive product polish across the whole page.
+   Additive; sits on top of the base + theme styles above.
+   ============================================================ */
+
+/* ---- Scroll-reveal ---- */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+[data-reveal].in-view {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] { opacity: 1; transform: none; transition: none; }
+}
+
+/* ---- Ambient page background ---- */
+[data-theme="dark"] body {
+  background:
+    radial-gradient(58% 48% at 10% -6%, rgba(56, 189, 248, 0.1), transparent 60%),
+    radial-gradient(52% 46% at 96% 4%, rgba(139, 92, 246, 0.1), transparent 56%),
+    var(--paper);
+  background-attachment: fixed;
+}
+body {
+  background:
+    radial-gradient(60% 50% at 8% -8%, rgba(14, 165, 233, 0.06), transparent 58%),
+    var(--paper);
+  background-attachment: fixed;
+}
+
+/* ---- Section rhythm ---- */
+.section { padding: clamp(3rem, 7vw, 5.5rem) 0; }
+
+.section-head .eyebrow,
+.hero .eyebrow {
+  position: relative;
+  padding-left: 2.4rem;
+}
+.section-head .eyebrow::before,
+.hero .eyebrow::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 1.9rem;
+  height: 2px;
+  transform: translateY(-50%);
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--brand-500), transparent);
+}
+
+/* ---- Premium cards: hairline + hover lift + glow ---- */
+.stat-card,
+.donut-feature,
+.yoy-card,
+.cap-card,
+.faq-fact,
+.calc-card,
+.breakdown-list,
+.sankey-card,
+.faq-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::after,
+.donut-feature::after,
+.cap-card::after,
+.calc-card::after,
+.breakdown-list::after,
+.sankey-card::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.55), transparent);
+  opacity: 0.7;
+}
+
+.stat-card,
+.donut-feature,
+.yoy-card,
+.cap-card,
+.faq-fact {
+  transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1), border-color 280ms ease,
+    box-shadow 280ms ease, background-color 350ms ease;
+}
+
+.stat-card:hover,
+.donut-feature:hover,
+.yoy-card:hover,
+.cap-card:hover,
+.faq-fact:hover {
+  transform: translateY(-4px);
+  border-color: rgba(56, 189, 248, 0.45);
+  box-shadow: 0 18px 44px rgba(2, 8, 20, 0.5);
+}
+
+/* (Surface fills are unified by the glass design system at the end of this
+   file, which uses the --glass-* tokens for both themes.) */
+
+/* ---- Hero: cinematic depth ---- */
+.hero { position: relative; overflow: hidden; }
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(40% 60% at 78% 30%, rgba(56, 189, 248, 0.16), transparent 60%),
+    radial-gradient(36% 50% at 14% 90%, rgba(139, 92, 246, 0.12), transparent 60%);
+}
+.hero .container { position: relative; z-index: 1; }
+
+.hero-figure {
+  box-shadow: 0 18px 50px rgba(2, 8, 20, 0.45);
+}
+
+/* Hero panel: animated sheen */
+.hero-panel::after {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(255, 255, 255, 0.06) 40deg, transparent 90deg);
+  animation: hero-sheen 14s linear infinite;
+  pointer-events: none;
+}
+@keyframes hero-sheen { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .hero-panel::after { animation: none; } }
+
+/* ---- Gradient primary buttons ---- */
+.btn-primary {
+  background: linear-gradient(135deg, var(--brand-500), var(--brand-700));
+  border-color: transparent;
+  box-shadow: 0 8px 24px rgba(14, 165, 233, 0.28);
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, var(--brand-300), var(--brand-500));
+  border-color: transparent;
+  transform: translateY(-1px);
+}
+
+/* ---- Headline feature card glow ---- */
+.stat-feature {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 18px 48px rgba(3, 105, 161, 0.35);
+}
+.stat-feature::after {
+  content: "";
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  right: -60px;
+  top: -80px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.18), transparent 70%);
+  pointer-events: none;
+}
+
+/* ---- Section divider glow between major sections ---- */
+.section--alt {
+  position: relative;
+}
+[data-theme="dark"] .section--alt::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.4), transparent);
+}
+
+/* ---- Footer polish ---- */
+.site-footer {
+  position: relative;
+  background: linear-gradient(180deg, #060b18, #0a1326);
+}
+.site-footer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--brand-700), var(--brand-500), var(--brand-300));
+}
+
+/* ============================================================
+   GLASS · INSTITUTIONAL DESIGN SYSTEM
+   Premium, accessible glassmorphism applied across every
+   section and chart frame. Appended last so it unifies the
+   surfaces defined above. Works in both themes via --glass-*.
+   ============================================================ */
+
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.66);
+  --glass-bg-2: rgba(255, 255, 255, 0.86);
+  --glass-border: rgba(15, 23, 42, 0.1);
+  --glass-edge: rgba(255, 255, 255, 0.75);
+  --glass-shadow: 0 16px 40px rgba(15, 23, 42, 0.1);
+  --glass-blur: 14px;
+  --kicker: var(--brand-700);
+}
+
+[data-theme="dark"] {
+  --glass-bg: rgba(20, 30, 50, 0.55);
+  --glass-bg-2: rgba(23, 33, 55, 0.82);
+  --glass-border: rgba(150, 180, 225, 0.16);
+  --glass-edge: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 20px 50px rgba(2, 8, 20, 0.55);
+  --glass-blur: 16px;
+  --kicker: var(--brand-300);
+}
+
+/* ---- Unified glass panels ---- */
+.stat-card,
+.donut-feature,
+.yoy-card,
+.cap-card,
+.faq-fact,
+.faq-item,
+.calc-card,
+.breakdown-list,
+.sankey-card,
+.table-wrap,
+.callout,
+.hero-figure,
+.donut-other-list {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.25);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.25);
+  box-shadow: inset 0 1px 0 var(--glass-edge), var(--glass-shadow);
+}
+
+.callout { border-radius: var(--radius-md); }
+
+/* Keep the existing cyan top-hairline accents, but the inset edge above
+   already provides the glass highlight, so soften the duplicate. */
+.stat-card::after,
+.donut-feature::after,
+.cap-card::after,
+.calc-card::after,
+.breakdown-list::after,
+.sankey-card::after {
+  opacity: 0.35;
+}
+
+/* ---- Institutional numbered section headers ---- */
+body { counter-reset: section; }
+.section-head { counter-increment: section; }
+
+.section-head .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding-left: 0;
+}
+.section-head .eyebrow::before {
+  content: counter(section, decimal-leading-zero);
+  position: static;
+  transform: none;
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.85rem;
+  width: auto;
+  height: 1.85rem;
+  padding: 0 0.4rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 7px;
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--kicker);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Source / caption chips (institutional "provenance") ---- */
+.source-tag,
+.donut-feature .source-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.28rem 0.65rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  background: var(--glass-bg);
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  letter-spacing: 0.01em;
+}
+.source-tag::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--brand-500);
+  flex: none;
+}
+
+/* ---- Chart frames: unified header for the donut features ---- */
+.donut-feature h3,
+.sankey-card + .container .sankey-hint {
+  letter-spacing: -0.01em;
+}
+
+/* ---- Accessible focus ring (whole site) ---- */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ============================================================
+   SIMPLER 3D STAGE CONTROLS
+   A compact segmented view switcher + a 3-icon glass toolbar,
+   replacing the previous cluster of text buttons.
+   ============================================================ */
+.stage-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  pointer-events: none;
+}
+
+.stage-modes {
+  margin: 0;
+  pointer-events: auto;
+}
+
+.stage-tools {
+  display: inline-flex;
+  gap: 0.4rem;
+  pointer-events: auto;
+}
+
+.stage-tool {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(8, 15, 30, 0.55);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: #e8f3ff;
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease, color 180ms ease;
+}
+.stage-tool:hover {
+  background: rgba(30, 58, 99, 0.72);
+  border-color: rgba(56, 189, 248, 0.6);
+  transform: translateY(-1px);
+}
+.stage-tool svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.stage-tool .ic-play,
+.stage-tool .ic-stop {
+  fill: currentColor;
+  stroke: none;
+}
+
+/* Tour button is the primary action — accent it. */
+#stage-tour {
+  background: linear-gradient(135deg, rgba(125, 211, 252, 0.95), rgba(14, 165, 233, 0.95));
+  border-color: transparent;
+  color: #04121f;
+}
+#stage-tour:hover {
+  background: linear-gradient(135deg, #7dd3fc, #38bdf8);
+}
+#stage-tour.is-touring {
+  background: rgba(8, 15, 30, 0.6);
+  color: #fde68a;
+  border-color: rgba(245, 158, 11, 0.7);
+}
+
+/* Icon toggles */
+.stage-tool .ic-stop { display: none; }
+#stage-tour.is-touring .ic-play { display: none; }
+#stage-tour.is-touring .ic-stop { display: block; }
+#stage-rotate .ic-rotate { display: none; }
+#stage-rotate.is-paused .ic-pause { display: none; }
+#stage-rotate.is-paused .ic-rotate { display: block; }
+#stage-rotate.is-paused { color: #fbbf24; border-color: rgba(251, 191, 36, 0.5); }
+
+/* ============================================================
+   DATA PAGE — glass toolbar + table
+   ============================================================ */
+.filters {
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: inset 0 1px 0 var(--glass-edge);
+}
+.filters input[type="search"],
+.filters select {
+  background: var(--glass-bg-2);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+}
+.jump-nav a {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.pill-toggle {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+thead th {
+  background: var(--glass-bg-2);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+/* ---- Footer: institutional ---- */
+.site-footer {
+  border-top: 1px solid var(--glass-border);
+}
+.site-footer strong {
+  letter-spacing: 0.01em;
+}
+
+/* ============================================================
+   DEPTH + GLASS v2
+   The frosted-glass look only reads if there's a rich, colorful
+   field behind the panels to blur. This adds a fixed gradient
+   "aurora" field + subtle grid + film grain, makes section
+   backgrounds translucent so that field shows through, and
+   re-specs the panels as real frosted glass with a lit rim.
+   ============================================================ */
+
+/* ---- Refined blue palette ---- (light defaults first, dark second) */
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.52);
+  --glass-bg-2: rgba(255, 255, 255, 0.74);
+  --glass-rim: rgba(255, 255, 255, 0.95);
+  --glass-edge: rgba(255, 255, 255, 0.8);
+  --glass-blur: 16px;
+  --glass-shadow: 0 18px 44px rgba(15, 23, 42, 0.12);
+}
+
+[data-theme="dark"] {
+  --ink: #eaf1fb;
+  --ink-soft: #a7b8d4;
+  --ink-faint: #6f82a3;
+  --paper: #070c18;
+  --line: #223352;
+
+  --glass-bg: rgba(13, 23, 44, 0.62);
+  --glass-bg-2: rgba(19, 30, 54, 0.74);
+  --glass-border: rgba(168, 200, 250, 0.2);
+  --glass-rim: rgba(190, 216, 255, 0.5);
+  --glass-edge: rgba(255, 255, 255, 0.12);
+  --glass-blur: 22px;
+  --glass-shadow: 0 26px 64px rgba(2, 7, 20, 0.6);
+}
+
+/* ---- The fixed color field (the thing the glass blurs) ---- */
+[data-theme="dark"] body { background: #060a14; }
+body { background: #e9eef7; }
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(42% 52% at 14% 6%, rgba(56, 189, 248, 0.24), transparent 60%),
+    radial-gradient(40% 50% at 88% 3%, rgba(99, 102, 241, 0.22), transparent 58%),
+    radial-gradient(46% 56% at 82% 84%, rgba(13, 148, 200, 0.20), transparent 60%),
+    radial-gradient(42% 52% at 4% 90%, rgba(45, 212, 191, 0.13), transparent 58%),
+    radial-gradient(75% 80% at 50% 45%, rgba(10, 18, 38, 0.0), rgba(3, 7, 16, 0.7) 100%);
+}
+[data-theme="light"] body::before {
+  opacity: 0.55;
+}
+
+/* Grid + film grain to add structure and kill banding */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E"),
+    linear-gradient(rgba(150, 185, 240, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(150, 185, 240, 0.05) 1px, transparent 1px);
+  background-size: 180px 180px, 48px 48px, 48px 48px;
+  opacity: 0.5;
+  -webkit-mask-image: radial-gradient(120% 90% at 50% 20%, #000 35%, transparent 92%);
+  mask-image: radial-gradient(120% 90% at 50% 20%, #000 35%, transparent 92%);
+}
+[data-theme="dark"] body::after { opacity: 0.45; }
+
+/* ---- Let the field show through the page ---- */
+[data-theme="dark"] .section--alt {
+  background: linear-gradient(180deg, rgba(120, 160, 225, 0.05), rgba(120, 160, 225, 0.02));
+  border-top-color: var(--glass-border);
+  border-bottom-color: var(--glass-border);
+}
+.section--alt {
+  background: rgba(255, 255, 255, 0.45);
+}
+[data-theme="dark"] .hero {
+  background: linear-gradient(180deg, rgba(14, 26, 49, 0.6) 0%, rgba(6, 10, 20, 0.2) 100%);
+}
+
+/* ---- Real frosted-glass panels: translucent fill + lit rim ---- */
+.stat-card,
+.donut-feature,
+.yoy-card,
+.cap-card,
+.faq-fact,
+.faq-item,
+.calc-card,
+.breakdown-list,
+.sankey-card,
+.table-wrap,
+.callout,
+.hero-figure,
+.donut-other-list,
+.filters {
+  background:
+    linear-gradient(var(--glass-bg), var(--glass-bg)) padding-box,
+    linear-gradient(150deg, var(--glass-rim), rgba(255, 255, 255, 0) 46%) border-box;
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  box-shadow: inset 0 1px 0 var(--glass-edge), var(--glass-shadow);
+}
+.callout,
+.filters { border-radius: var(--radius-md); }
+
+/* Drop the older duplicate cyan top-hairline; the rim handles the edge now */
+.stat-card::after,
+.donut-feature::after,
+.cap-card::after,
+.calc-card::after,
+.breakdown-list::after,
+.sankey-card::after {
+  display: none;
+}
+
+/* Sankey full-bleed band: translucent so the field shows behind it */
+[data-theme="dark"] .sankey-card--full {
+  background: rgba(14, 24, 46, 0.4);
+}
+
+/* Numbered kicker chip + source chips share the frosted look */
+.section-head .eyebrow::before,
+.source-tag {
+  background: var(--glass-bg-2);
+}
+
+/* ============================================================
+   CLEAN MODERN FINISH  (overrides the heavy glass experiments)
+   Calm background, readable near-solid panels, crisp borders,
+   high-contrast text. Glass becomes a subtle accent, not a fog.
+   ============================================================ */
+
+/* Remove the film-grain / grid overlay that read as dated + muddy. */
+body::after { display: none !important; }
+
+/* Calm, restrained background. */
+[data-theme="dark"] body { background: #0a0f1b; }
+body { background: #eef2f8; }
+body::before {
+  z-index: -2;
+  opacity: 1;
+  background:
+    radial-gradient(72% 48% at 50% -12%, rgba(56, 189, 248, 0.1), transparent 62%),
+    radial-gradient(48% 40% at 92% 6%, rgba(99, 102, 241, 0.08), transparent 60%),
+    radial-gradient(46% 42% at 6% 96%, rgba(45, 212, 191, 0.06), transparent 60%);
+}
+[data-theme="light"] body::before { opacity: 0.6; }
+
+/* Higher-contrast text. */
+:root {
+  --panel: rgba(255, 255, 255, 0.92);
+  --panel-border: rgba(15, 23, 42, 0.1);
+  --panel-hover: rgba(14, 165, 233, 0.45);
+}
+[data-theme="dark"] {
+  --ink: #eef3fb;
+  --ink-soft: #aebcd6;
+  --ink-faint: #7587a6;
+  --panel: rgba(17, 25, 43, 0.88);
+  --panel-border: rgba(162, 188, 230, 0.16);
+  --panel-hover: rgba(120, 170, 240, 0.4);
+}
+
+/* Readable panels: near-solid surface, crisp border, light frost, soft lift. */
+.stat-card,
+.donut-feature,
+.yoy-card,
+.cap-card,
+.faq-fact,
+.faq-item,
+.calc-card,
+.breakdown-list,
+.sankey-card,
+.table-wrap,
+.callout,
+.hero-figure,
+.donut-other-list,
+.filters {
+  background: var(--panel) !important;
+  border: 1px solid var(--panel-border) !important;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.26) !important;
+}
+
+.stat-card:hover,
+.donut-feature:hover,
+.yoy-card:hover,
+.cap-card:hover,
+.faq-fact:hover {
+  border-color: var(--panel-hover) !important;
+}
+
+/* Calm section + hero + Sankey backgrounds (no bright wash behind panels). */
+[data-theme="dark"] .section--alt {
+  background: rgba(255, 255, 255, 0.022);
+  border-top-color: var(--panel-border);
+  border-bottom-color: var(--panel-border);
+}
+.section--alt { background: rgba(255, 255, 255, 0.55); }
+
+[data-theme="dark"] .hero {
+  background: linear-gradient(180deg, rgba(16, 27, 50, 0.72) 0%, rgba(10, 15, 27, 0) 100%);
+}
+[data-theme="dark"] .sankey-card--full { background: rgba(15, 22, 40, 0.55) !important; }
+
+/* Solid, readable chips. */
+.section-head .eyebrow::before,
+.source-tag { background: rgba(255, 255, 255, 0.04); }
+[data-theme="light"] .section-head .eyebrow::before,
+[data-theme="light"] .source-tag { background: rgba(15, 23, 42, 0.04); }
+
+thead th { background: var(--panel) !important; }
+
+/* ============================================================
+   WWF · MODERN INSTITUTIONAL  (light default, blue, airy)
+   Clean solid cards (pinpoint-style), bold-sans headings with
+   italic-serif accents, West Windsor Forward blue. This is the
+   final authoritative layer.
+   ============================================================ */
+
+/* ---- Surface tokens (light first, then dark overrides) ---- */
+:root {
+  --panel: #ffffff;
+  --panel-border: rgba(12, 74, 110, 0.12);
+  --panel-hover: rgba(3, 105, 161, 0.4);
+}
+[data-theme="dark"] {
+  --ink: #eaf1fb;
+  --ink-soft: #a6b6d2;
+  --ink-faint: #6f81a1;
+  --paper: #0c1526;
+  --card: #18223b;
+  --line: #26324c;
+  --panel: #17213a;
+  --panel-border: rgba(125, 211, 252, 0.14);
+  --panel-hover: rgba(125, 211, 252, 0.45);
+}
+
+/* ---- Calm, light background (no grain, no heavy field) ---- */
+body::after { display: none !important; }
+body { background: #eef3fa; }
+[data-theme="dark"] body { background: #0a1322; }
+body::before {
+  z-index: -2;
+  opacity: 1 !important;
+  background:
+    radial-gradient(60% 42% at 50% -12%, rgba(14, 165, 233, 0.12), transparent 62%),
+    radial-gradient(46% 38% at 92% 2%, rgba(3, 105, 161, 0.08), transparent 60%) !important;
+}
+[data-theme="dark"] body::before {
+  background:
+    radial-gradient(64% 46% at 50% -10%, rgba(14, 165, 233, 0.14), transparent 60%),
+    radial-gradient(46% 40% at 90% 4%, rgba(99, 102, 241, 0.1), transparent 60%) !important;
+}
+
+/* ---- Clean solid cards (no frost) ---- */
+.stat-card,
+.donut-feature,
+.yoy-card,
+.cap-card,
+.faq-fact,
+.faq-item,
+.calc-card,
+.breakdown-list,
+.sankey-card,
+.table-wrap,
+.callout,
+.hero-figure,
+.donut-other-list,
+.filters {
+  background: var(--panel) !important;
+  border: 1px solid var(--panel-border) !important;
+  border-radius: 16px;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: 0 1px 2px rgba(12, 74, 110, 0.05), 0 14px 32px rgba(12, 74, 110, 0.08) !important;
+}
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .donut-feature,
+[data-theme="dark"] .yoy-card,
+[data-theme="dark"] .cap-card,
+[data-theme="dark"] .faq-fact,
+[data-theme="dark"] .faq-item,
+[data-theme="dark"] .calc-card,
+[data-theme="dark"] .breakdown-list,
+[data-theme="dark"] .sankey-card,
+[data-theme="dark"] .table-wrap,
+[data-theme="dark"] .callout,
+[data-theme="dark"] .hero-figure,
+[data-theme="dark"] .donut-other-list,
+[data-theme="dark"] .filters {
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ---- Light, clean header ---- */
+[data-theme="light"] .site-header {
+  background: rgba(255, 255, 255, 0.86);
+  border-bottom: 1px solid var(--panel-border);
+}
+[data-theme="dark"] .site-header {
+  background: rgba(12, 21, 38, 0.86);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+/* ---- Sections: crisp alternating ---- */
+.section--alt { background: #ffffff !important; border-top: 1px solid var(--panel-border); border-bottom: 1px solid var(--panel-border); }
+[data-theme="dark"] .section--alt { background: rgba(255, 255, 255, 0.025) !important; }
+[data-theme="dark"] .section--alt::before { display: none; }
+
+/* ---- Typography: bold sans + italic-serif accent ---- */
+h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.025em; }
+h1 { font-weight: 800; line-height: 1.04; }
+h2 { font-weight: 700; }
+.serif-accent {
+  font-family: var(--font-accent);
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--brand-500);
+}
+.donut-center-value, .stat-feature-value, .hero-figure-value, .cap-value,
+.yoy-total-amount, .calc-result-value {
+  font-family: var(--font-display);
+}
+
+/* ---- Eyebrows: clean uppercase blue (no number chip) ---- */
+.section-head .eyebrow::before { display: none !important; }
+.section-head .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0 !important;
+  padding-left: 0 !important;
+  color: var(--brand-700);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+[data-theme="dark"] .section-head .eyebrow { color: var(--brand-300); }
+
+/* Hero eyebrow as a pinpoint-style pill with a dot */
+.hero .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.4rem 0.95rem !important;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--brand-700);
+  box-shadow: 0 2px 10px rgba(12, 74, 110, 0.06);
+}
+.hero .eyebrow::before {
+  content: "" !important;
+  position: static !important;
+  transform: none !important;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--teal);
+  box-shadow: 0 0 8px var(--teal);
+}
+[data-theme="dark"] .hero .eyebrow { color: var(--brand-300); }
+
+/* ---- Primary button: solid WWF blue ---- */
+.btn-primary {
+  background: var(--brand-700) !important;
+  border-color: var(--brand-700) !important;
+  box-shadow: 0 10px 24px rgba(3, 105, 161, 0.26) !important;
+}
+.btn-primary:hover { background: var(--brand-900) !important; }
+
+/* ---- Source/kicker chips ---- */
+.source-tag { background: var(--panel) !important; border-color: var(--panel-border) !important; color: var(--ink-soft); }
+thead th { background: var(--panel) !important; }
+
+/* ---- Lighten the dark hero too ---- */
+[data-theme="dark"] .hero {
+  background: linear-gradient(180deg, rgba(23, 38, 70, 0.6) 0%, rgba(10, 19, 34, 0) 100%);
+}
+
+/* ============================================================
+   FINISH: blue-led chart palette, stage blend, tighter rhythm
+   ============================================================ */
+
+/* ---- Curated blue-led categorical palette (institutional) ----
+   The largest functional groups resolve to cohesive blues/teals;
+   only small categories use a warm/violet accent. */
+:root {
+  --grp-1: #0c4a6e;  /* General Government — navy */
+  --grp-2: #38bdf8;  /* Shared Services — light sky */
+  --grp-3: #0ea5e9;  /* Public Works — sky */
+  --grp-4: #06b6d4;  /* Health — cyan */
+  --grp-5: #22d3ee;  /* Recreation — bright cyan */
+  --grp-6: #0891b2;  /* Pensions — deep cyan */
+  --grp-7: #0d9488;  /* Insurance — teal */
+  --grp-8: #f59e0b;  /* Capital — amber accent */
+  --grp-9: #1d4ed8;  /* Public Safety (largest) — strong blue */
+  --grp-10: #7c3aed; /* Grants — violet accent */
+  --grp-11: #2dd4bf; /* Land Use — teal-green */
+  --grp-12: #4f46e5; /* Debt Service — indigo */
+  --grp-13: #64748b; /* Reserve — slate */
+}
+
+/* ---- Stage: lighter blue scene that blends into the page ---- */
+:root { --stage-fade: #eef3fa; }
+[data-theme="dark"] { --stage-fade: #0a1322; }
+
+.stage {
+  background: linear-gradient(180deg, #3c618f 0%, #20396188 40%, #16294a 100%) !important;
+}
+.stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    var(--stage-fade) 0%,
+    rgba(0, 0, 0, 0) 13%,
+    rgba(0, 0, 0, 0) 87%,
+    var(--stage-fade) 100%
+  );
+}
+
+/* ---- Tighter, more generous type rhythm ---- */
+h1 { font-size: clamp(2.4rem, 5.2vw, 4rem); }
+.hero h1 { max-width: 17ch; margin-bottom: 1.1rem; }
+.section-head { margin-bottom: 2.6rem; max-width: 64ch; }
+.section-head h2 { font-size: clamp(1.7rem, 3.4vw, 2.5rem); margin-bottom: 0.7rem; }
+.section-head .eyebrow { margin-bottom: 0.9rem; }
+.section-intro { font-size: 1.05rem; line-height: 1.65; }

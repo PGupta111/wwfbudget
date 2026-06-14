@@ -11,6 +11,12 @@ Forward website (e.g. as a subpage or iframe).
 
 What's inside:
 
+- **3D budget stage** — an interactive WebGL scene (Three.js) where every
+  spending category is a glowing column sized by its budget, with light
+  streaming from a central "budget core" out to where the money goes. Orbit,
+  zoom, hover for a tooltip, or click a column to fly the camera in and open a
+  department-level breakdown. Falls back to the 2D charts if WebGL is
+  unavailable, and respects `prefers-reduced-motion`.
 - **At a glance** — headline totals with sources
 - **Money flow (Sankey)** — every revenue source flowing into the 2026
   budget, then out into spending categories, with no input required
@@ -30,7 +36,9 @@ What's inside:
 The site ships every dependency it needs, so it loads with no third-party
 network calls (good for privacy, performance, and offline/embedded use):
 
-- D3 and d3-sankey are vendored in [`web/js/vendor/`](web/js/vendor/)
+- D3, d3-sankey, and Three.js (with its postprocessing/controls addons) are
+  vendored in [`web/js/vendor/`](web/js/vendor/); `three` is wired up with an
+  ES-module import map in the page `<head>`
 - The Inter and Lora webfonts are self-hosted in
   [`web/assets/fonts/`](web/assets/fonts/) and declared in
   [`web/css/fonts.css`](web/css/fonts.css)

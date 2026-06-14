@@ -3,6 +3,7 @@ import { renderSankey, renderDonut } from "./charts.js";
 import { initCalculator } from "./calculator.js";
 import { attachGlossaryTooltips } from "./glossary.js";
 import { initUI } from "./ui.js";
+import { initBudget3D, isWebGLAvailable } from "./viz3d.js";
 import {
   GROUP_DETAILS,
   REVENUE_DETAILS,
@@ -458,9 +459,129 @@ function countUpCompact(el, target) {
   observer.observe(el);
 }
 
+/** Wire up the interactive 3D stage: view modes, guided tour, dynamic legend,
+ * camera controls, and the click-to-open detail panel. Falls back to a short
+ * message (and the 2D charts below) if WebGL can't start. */
+function initStage(data) {
+  const stage = document.getElementById("stage");
+  const fallback = document.getElementById("stage-fallback");
+  if (!stage) return;
+
+  const failGracefully = () => {
+    if (fallback) fallback.hidden = false;
+    document.getElementById("budget-3d")?.remove();
+    document.getElementById("stage-labels")?.remove();
+  };
+
+  if (!isWebGLAvailable()) return failGracefully();
+
+  const legend = document.getElementById("stage-legend");
+  const panel = document.getElementById("stage-panel");
+  const body = document.getElementById("stage-panel-body");
+  const tourBtn = document.getElementById("stage-tour");
+
+  function showPanel(detail) {
+    if (!panel || !body) return;
+    if (!detail) {
+      panel.classList.remove("is-open");
+      document.querySelectorAll(".stage-legend-item.is-active").forEach((b) => b.classList.remove("is-active"));
+      return;
+    }
+    body.innerHTML = `
+      <span class="stage-panel-eyebrow" style="background:${detail.colorHex}">${detail.kind}</span>
+      <h3>${detail.group}</h3>
+      <div class="stage-panel-amount" style="color:${detail.colorHex}">${dollars(detail.amount, 0)}</div>
+      <div class="stage-panel-sub">${detail.pct.toFixed(1)}% of the 2026 ${detail.kind === "Revenue source" ? "revenue" : "municipal budget"}</div>
+      ${detail.blurb ? `<p class="stage-panel-blurb">${detail.blurb}</p>` : ""}
+      ${
+        detail.breakdown.length
+          ? `<div class="stage-panel-bd-title">${detail.kind === "Revenue source" ? "What's included" : "Where it goes"}</div>
+             ${detail.breakdown
+               .map((b) => `<div class="stage-bd-row"><span>${b.label}</span><span>${dollars(b.amount, 0)}</span></div>`)
+               .join("")}`
+          : ""
+      }`;
+    panel.classList.add("is-open");
+    // Reflect the selection onto the legend chips.
+    document.querySelectorAll(".stage-legend-item").forEach((b) => {
+      b.classList.toggle("is-active", b.dataset.group === detail.group);
+    });
+  }
+
+  // Rebuild the legend whenever the active view changes.
+  function rebuildLegend(items) {
+    if (!legend) return;
+    legend.innerHTML = items
+      .map(
+        (it) => `
+        <button type="button" class="stage-legend-item" data-group="${it.name.replace(/"/g, "&quot;")}">
+          <span class="stage-legend-swatch" style="background:${it.colorHex}"></span>
+          ${it.name}
+        </button>`
+      )
+      .join("");
+    legend.querySelectorAll(".stage-legend-item").forEach((item) => {
+      const name = item.dataset.group;
+      item.addEventListener("mouseenter", () => viz.hoverItem(name));
+      item.addEventListener("mouseleave", () => viz.hoverItem(null));
+      item.addEventListener("click", () => viz.focusItem(name));
+    });
+  }
+
+  let viz;
+  try {
+    viz = initBudget3D(data, {
+      onSelect: showPanel,
+      onItems: rebuildLegend,
+      onTour: (active) => {
+        if (tourBtn) {
+          tourBtn.classList.toggle("is-touring", active);
+          tourBtn.setAttribute("aria-label", active ? "Stop guided tour" : "Play guided tour");
+          tourBtn.title = active ? "Stop tour" : "Guided tour";
+        }
+      },
+    });
+  } catch (err) {
+    console.error("3D stage failed:", err);
+    return failGracefully();
+  }
+  if (!viz) return failGracefully();
+
+  // View-mode switcher.
+  const modeBtns = [...document.querySelectorAll(".stage-mode")];
+  modeBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      modeBtns.forEach((b) => {
+        const on = b === btn;
+        b.classList.toggle("is-active", on);
+        b.setAttribute("aria-selected", String(on));
+      });
+      viz.setMode(btn.dataset.mode);
+    });
+  });
+
+  // Tour toggle.
+  tourBtn?.addEventListener("click", () => {
+    if (tourBtn.classList.contains("is-touring")) viz.cancelTour();
+    else viz.startTour();
+  });
+
+  // Rotation toggle (icon swaps via the .is-paused class) + reset.
+  const rotateBtn = document.getElementById("stage-rotate");
+  rotateBtn?.addEventListener("click", () => {
+    const on = viz.toggleRotate();
+    rotateBtn.setAttribute("aria-pressed", String(on));
+    rotateBtn.classList.toggle("is-paused", !on);
+    rotateBtn.setAttribute("aria-label", on ? "Pause auto-rotate" : "Resume auto-rotate");
+  });
+  document.getElementById("stage-reset")?.addEventListener("click", () => viz.resetView());
+  document.getElementById("stage-panel-close")?.addEventListener("click", () => viz.resetView());
+}
+
 async function init() {
   initUI();
   const data = await loadBudget();
+  initStage(data);
 
   const total = data.headline.total_budget.amount;
   renderHeadlineStats(data);

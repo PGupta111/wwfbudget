@@ -10,13 +10,20 @@
 <meta name="color-scheme" content="light dark" />
 <link rel="stylesheet" href="css/fonts.css" />
 <link rel="stylesheet" href="css/styles.css" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "./js/vendor/three/three.module.min.js",
+    "three/addons/": "./js/vendor/three/addons/"
+  }
+}
+</script>
 <script>
   // Apply the saved (or system) theme before first paint to avoid a flash.
   (function () {
     try {
       var saved = localStorage.getItem("wwf-theme");
-      var theme = saved || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-      document.documentElement.setAttribute("data-theme", theme);
+      document.documentElement.setAttribute("data-theme", saved || "light");
     } catch (e) {}
   })();
 </script>
@@ -52,7 +59,7 @@
   <div class="container hero-grid">
     <div class="hero-copy">
       <span class="eyebrow">Township of West Windsor &middot; Adopted 2026 Municipal Budget</span>
-      <h1>West Windsor's 2026 municipal budget, explained</h1>
+      <h1>West Windsor's 2026 municipal budget, <em class="serif-accent">explained</em>.</h1>
       <p>
         A resident-friendly guide to where the township's money comes from,
         where it goes, and what it means for your household &mdash; based on
@@ -99,6 +106,63 @@
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ================= 3D STAGE ================= -->
+<section class="stage" id="stage">
+  <canvas id="budget-3d"></canvas>
+  <div class="stage-labels" id="stage-labels"></div>
+  <div class="stage-grain" aria-hidden="true"></div>
+
+  <div class="stage-ui">
+    <div class="stage-head">
+      <span class="stage-eyebrow">Interactive&nbsp;3D &middot; WebGL</span>
+      <h2>Your tax dollars, in three dimensions</h2>
+      <p>
+        Each glowing column is one slice of the 2026 municipal budget &mdash;
+        taller and brighter means more money. Light streams from the budget
+        core out to where it&rsquo;s spent. <strong>Drag</strong> to orbit,
+        <strong>scroll</strong> to zoom, and <strong>hover or tap</strong> a
+        column for the details.
+      </p>
+      <div class="stage-toolbar">
+        <div class="stage-modes" id="stage-modes" role="tablist" aria-label="Choose a 3D view">
+          <button type="button" class="stage-mode is-active" data-mode="bars" role="tab" aria-selected="true">Bars</button>
+          <button type="button" class="stage-mode" data-mode="pie" role="tab" aria-selected="false">Pie</button>
+          <button type="button" class="stage-mode" data-mode="revenue" role="tab" aria-selected="false">Revenue</button>
+        </div>
+        <div class="stage-tools" role="group" aria-label="View controls">
+          <button type="button" class="stage-tool" id="stage-tour" aria-label="Play guided tour" title="Guided tour">
+            <svg class="ic-play" viewBox="0 0 24 24" aria-hidden="true"><polygon points="7 5 19 12 7 19"/></svg>
+            <svg class="ic-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+          </button>
+          <button type="button" class="stage-tool" id="stage-rotate" aria-pressed="true" aria-label="Pause auto-rotate" title="Auto-rotate">
+            <svg class="ic-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="5" width="3.4" height="14" rx="1"/><rect x="13.6" y="5" width="3.4" height="14" rx="1"/></svg>
+            <svg class="ic-rotate" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
+          </button>
+          <button type="button" class="stage-tool" id="stage-reset" aria-label="Reset view" title="Reset view">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 9 3 3 9 3"/><polyline points="21 9 21 3 15 3"/><polyline points="3 15 3 21 9 21"/><polyline points="21 15 21 21 15 21"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage-legend" id="stage-legend"></div>
+
+    <aside class="stage-panel" id="stage-panel" aria-live="polite">
+      <button type="button" class="stage-panel-close" id="stage-panel-close" aria-label="Close details">&times;</button>
+      <div class="stage-panel-body" id="stage-panel-body"></div>
+    </aside>
+  </div>
+
+  <div class="stage-tooltip" id="stage-tooltip"></div>
+
+  <div class="stage-fallback" id="stage-fallback" hidden>
+    <p>
+      Your browser couldn&rsquo;t start the 3D view, but every figure is still
+      below as interactive 2D charts and tables.
+    </p>
   </div>
 </section>
 

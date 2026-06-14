@@ -15,8 +15,7 @@
   (function () {
     try {
       var saved = localStorage.getItem("wwf-theme");
-      var theme = saved || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-      document.documentElement.setAttribute("data-theme", theme);
+      document.documentElement.setAttribute("data-theme", saved || "light");
     } catch (e) {}
   })();
 </script>
