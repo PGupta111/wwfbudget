@@ -3244,3 +3244,138 @@ thead th {
 .site-footer strong {
   letter-spacing: 0.01em;
 }
+
+/* ============================================================
+   DEPTH + GLASS v2
+   The frosted-glass look only reads if there's a rich, colorful
+   field behind the panels to blur. This adds a fixed gradient
+   "aurora" field + subtle grid + film grain, makes section
+   backgrounds translucent so that field shows through, and
+   re-specs the panels as real frosted glass with a lit rim.
+   ============================================================ */
+
+/* ---- Refined blue palette ---- */
+[data-theme="dark"] {
+  --ink: #eaf1fb;
+  --ink-soft: #a7b8d4;
+  --ink-faint: #6f82a3;
+  --paper: #070c18;
+  --line: #223352;
+
+  --glass-bg: rgba(13, 23, 44, 0.62);
+  --glass-bg-2: rgba(19, 30, 54, 0.74);
+  --glass-border: rgba(168, 200, 250, 0.2);
+  --glass-rim: rgba(190, 216, 255, 0.5);
+  --glass-edge: rgba(255, 255, 255, 0.12);
+  --glass-blur: 22px;
+  --glass-shadow: 0 26px 64px rgba(2, 7, 20, 0.6);
+}
+
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.52);
+  --glass-bg-2: rgba(255, 255, 255, 0.74);
+  --glass-rim: rgba(255, 255, 255, 0.95);
+  --glass-edge: rgba(255, 255, 255, 0.8);
+  --glass-blur: 16px;
+  --glass-shadow: 0 18px 44px rgba(15, 23, 42, 0.12);
+}
+
+/* ---- The fixed color field (the thing the glass blurs) ---- */
+[data-theme="dark"] body { background: #060a14; }
+body { background: #e9eef7; }
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(42% 52% at 14% 6%, rgba(56, 189, 248, 0.24), transparent 60%),
+    radial-gradient(40% 50% at 88% 3%, rgba(99, 102, 241, 0.22), transparent 58%),
+    radial-gradient(46% 56% at 82% 84%, rgba(13, 148, 200, 0.20), transparent 60%),
+    radial-gradient(42% 52% at 4% 90%, rgba(45, 212, 191, 0.13), transparent 58%),
+    radial-gradient(75% 80% at 50% 45%, rgba(10, 18, 38, 0.0), rgba(3, 7, 16, 0.7) 100%);
+}
+[data-theme="light"] body::before {
+  opacity: 0.55;
+}
+
+/* Grid + film grain to add structure and kill banding */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E"),
+    linear-gradient(rgba(150, 185, 240, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(150, 185, 240, 0.05) 1px, transparent 1px);
+  background-size: 180px 180px, 48px 48px, 48px 48px;
+  opacity: 0.5;
+  -webkit-mask-image: radial-gradient(120% 90% at 50% 20%, #000 35%, transparent 92%);
+  mask-image: radial-gradient(120% 90% at 50% 20%, #000 35%, transparent 92%);
+}
+[data-theme="dark"] body::after { opacity: 0.45; }
+
+/* ---- Let the field show through the page ---- */
+[data-theme="dark"] .section--alt {
+  background: linear-gradient(180deg, rgba(120, 160, 225, 0.05), rgba(120, 160, 225, 0.02));
+  border-top-color: var(--glass-border);
+  border-bottom-color: var(--glass-border);
+}
+.section--alt {
+  background: rgba(255, 255, 255, 0.45);
+}
+[data-theme="dark"] .hero {
+  background: linear-gradient(180deg, rgba(14, 26, 49, 0.6) 0%, rgba(6, 10, 20, 0.2) 100%);
+}
+
+/* ---- Real frosted-glass panels: translucent fill + lit rim ---- */
+.stat-card,
+.donut-feature,
+.yoy-card,
+.cap-card,
+.faq-fact,
+.faq-item,
+.calc-card,
+.breakdown-list,
+.sankey-card,
+.table-wrap,
+.callout,
+.hero-figure,
+.donut-other-list,
+.filters {
+  background:
+    linear-gradient(var(--glass-bg), var(--glass-bg)) padding-box,
+    linear-gradient(150deg, var(--glass-rim), rgba(255, 255, 255, 0) 46%) border-box;
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  box-shadow: inset 0 1px 0 var(--glass-edge), var(--glass-shadow);
+}
+.callout,
+.filters { border-radius: var(--radius-md); }
+
+/* Drop the older duplicate cyan top-hairline; the rim handles the edge now */
+.stat-card::after,
+.donut-feature::after,
+.cap-card::after,
+.calc-card::after,
+.breakdown-list::after,
+.sankey-card::after {
+  display: none;
+}
+
+/* Sankey full-bleed band: translucent so the field shows behind it */
+[data-theme="dark"] .sankey-card--full {
+  background: rgba(14, 24, 46, 0.4);
+}
+
+/* Numbered kicker chip + source chips share the frosted look */
+.section-head .eyebrow::before,
+.source-tag {
+  background: var(--glass-bg-2);
+}
