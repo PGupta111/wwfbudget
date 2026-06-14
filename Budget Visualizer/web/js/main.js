@@ -536,7 +536,8 @@ function initStage(data) {
       onTour: (active) => {
         if (tourBtn) {
           tourBtn.classList.toggle("is-touring", active);
-          tourBtn.lastChild.textContent = active ? " Stop tour" : " Take the tour";
+          tourBtn.setAttribute("aria-label", active ? "Stop guided tour" : "Play guided tour");
+          tourBtn.title = active ? "Stop tour" : "Guided tour";
         }
       },
     });
@@ -550,8 +551,11 @@ function initStage(data) {
   const modeBtns = [...document.querySelectorAll(".stage-mode")];
   modeBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
-      modeBtns.forEach((b) => b.classList.toggle("is-active", b === btn));
-      btn.setAttribute("aria-selected", "true");
+      modeBtns.forEach((b) => {
+        const on = b === btn;
+        b.classList.toggle("is-active", on);
+        b.setAttribute("aria-selected", String(on));
+      });
       viz.setMode(btn.dataset.mode);
     });
   });
@@ -562,12 +566,13 @@ function initStage(data) {
     else viz.startTour();
   });
 
-  // Rotation toggle + reset.
+  // Rotation toggle (icon swaps via the .is-paused class) + reset.
   const rotateBtn = document.getElementById("stage-rotate");
   rotateBtn?.addEventListener("click", () => {
     const on = viz.toggleRotate();
     rotateBtn.setAttribute("aria-pressed", String(on));
-    rotateBtn.lastChild.textContent = on ? " Pause rotation" : " Resume rotation";
+    rotateBtn.classList.toggle("is-paused", !on);
+    rotateBtn.setAttribute("aria-label", on ? "Pause auto-rotate" : "Resume auto-rotate");
   });
   document.getElementById("stage-reset")?.addEventListener("click", () => viz.resetView());
   document.getElementById("stage-panel-close")?.addEventListener("click", () => viz.resetView());

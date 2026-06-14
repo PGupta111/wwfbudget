@@ -126,20 +126,25 @@
         <strong>scroll</strong> to zoom, and <strong>hover or tap</strong> a
         column for the details.
       </p>
-      <div class="stage-modes" id="stage-modes" role="tablist" aria-label="3D view">
-        <button type="button" class="stage-mode is-active" data-mode="bars">Spending&nbsp;· bars</button>
-        <button type="button" class="stage-mode" data-mode="pie">Spending&nbsp;· pie</button>
-        <button type="button" class="stage-mode" data-mode="revenue">Revenue&nbsp;· pie</button>
-      </div>
-      <div class="stage-actions">
-        <button type="button" class="stage-btn stage-btn--accent" id="stage-tour">
-          <span class="stage-tour-icon" aria-hidden="true">&#9654;</span> Take the tour
-        </button>
-        <button type="button" class="stage-btn" id="stage-rotate" aria-pressed="true">
-          <span class="stage-btn-dot"></span> Pause rotation
-        </button>
-        <button type="button" class="stage-btn" id="stage-reset">Reset view</button>
-        <a class="stage-btn stage-btn--ghost" href="#flow">See the 2D flow &rarr;</a>
+      <div class="stage-toolbar">
+        <div class="stage-modes" id="stage-modes" role="tablist" aria-label="Choose a 3D view">
+          <button type="button" class="stage-mode is-active" data-mode="bars" role="tab" aria-selected="true">Bars</button>
+          <button type="button" class="stage-mode" data-mode="pie" role="tab" aria-selected="false">Pie</button>
+          <button type="button" class="stage-mode" data-mode="revenue" role="tab" aria-selected="false">Revenue</button>
+        </div>
+        <div class="stage-tools" role="group" aria-label="View controls">
+          <button type="button" class="stage-tool" id="stage-tour" aria-label="Play guided tour" title="Guided tour">
+            <svg class="ic-play" viewBox="0 0 24 24" aria-hidden="true"><polygon points="7 5 19 12 7 19"/></svg>
+            <svg class="ic-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+          </button>
+          <button type="button" class="stage-tool" id="stage-rotate" aria-pressed="true" aria-label="Pause auto-rotate" title="Auto-rotate">
+            <svg class="ic-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="5" width="3.4" height="14" rx="1"/><rect x="13.6" y="5" width="3.4" height="14" rx="1"/></svg>
+            <svg class="ic-rotate" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
+          </button>
+          <button type="button" class="stage-tool" id="stage-reset" aria-label="Reset view" title="Reset view">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 9 3 3 9 3"/><polyline points="21 9 21 3 15 3"/><polyline points="3 15 3 21 9 21"/><polyline points="21 15 21 21 15 21"/></svg>
+          </button>
+        </div>
       </div>
     </div>
 

@@ -2889,17 +2889,8 @@ body {
   box-shadow: 0 18px 44px rgba(2, 8, 20, 0.5);
 }
 
-[data-theme="dark"] .stat-card,
-[data-theme="dark"] .donut-feature,
-[data-theme="dark"] .yoy-card,
-[data-theme="dark"] .cap-card,
-[data-theme="dark"] .faq-fact,
-[data-theme="dark"] .calc-card,
-[data-theme="dark"] .breakdown-list,
-[data-theme="dark"] .sankey-card,
-[data-theme="dark"] .faq-item {
-  background: linear-gradient(180deg, rgba(28, 41, 66, 0.55), rgba(17, 26, 44, 0.85));
-}
+/* (Surface fills are unified by the glass design system at the end of this
+   file, which uses the --glass-* tokens for both themes.) */
 
 /* ---- Hero: cinematic depth ---- */
 .hero { position: relative; overflow: hidden; }
@@ -2987,4 +2978,269 @@ body {
   right: 0;
   height: 2px;
   background: linear-gradient(90deg, var(--brand-700), var(--brand-500), var(--brand-300));
+}
+
+/* ============================================================
+   GLASS · INSTITUTIONAL DESIGN SYSTEM
+   Premium, accessible glassmorphism applied across every
+   section and chart frame. Appended last so it unifies the
+   surfaces defined above. Works in both themes via --glass-*.
+   ============================================================ */
+
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.66);
+  --glass-bg-2: rgba(255, 255, 255, 0.86);
+  --glass-border: rgba(15, 23, 42, 0.1);
+  --glass-edge: rgba(255, 255, 255, 0.75);
+  --glass-shadow: 0 16px 40px rgba(15, 23, 42, 0.1);
+  --glass-blur: 14px;
+  --kicker: var(--brand-700);
+}
+
+[data-theme="dark"] {
+  --glass-bg: rgba(20, 30, 50, 0.55);
+  --glass-bg-2: rgba(23, 33, 55, 0.82);
+  --glass-border: rgba(150, 180, 225, 0.16);
+  --glass-edge: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 20px 50px rgba(2, 8, 20, 0.55);
+  --glass-blur: 16px;
+  --kicker: var(--brand-300);
+}
+
+/* ---- Unified glass panels ---- */
+.stat-card,
+.donut-feature,
+.yoy-card,
+.cap-card,
+.faq-fact,
+.faq-item,
+.calc-card,
+.breakdown-list,
+.sankey-card,
+.table-wrap,
+.callout,
+.hero-figure,
+.donut-other-list {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.25);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.25);
+  box-shadow: inset 0 1px 0 var(--glass-edge), var(--glass-shadow);
+}
+
+.callout { border-radius: var(--radius-md); }
+
+/* Keep the existing cyan top-hairline accents, but the inset edge above
+   already provides the glass highlight, so soften the duplicate. */
+.stat-card::after,
+.donut-feature::after,
+.cap-card::after,
+.calc-card::after,
+.breakdown-list::after,
+.sankey-card::after {
+  opacity: 0.35;
+}
+
+/* ---- Institutional numbered section headers ---- */
+body { counter-reset: section; }
+.section-head { counter-increment: section; }
+
+.section-head .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding-left: 0;
+}
+.section-head .eyebrow::before {
+  content: counter(section, decimal-leading-zero);
+  position: static;
+  transform: none;
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.85rem;
+  width: auto;
+  height: 1.85rem;
+  padding: 0 0.4rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 7px;
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--kicker);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Source / caption chips (institutional "provenance") ---- */
+.source-tag,
+.donut-feature .source-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.28rem 0.65rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  background: var(--glass-bg);
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  letter-spacing: 0.01em;
+}
+.source-tag::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--brand-500);
+  flex: none;
+}
+
+/* ---- Chart frames: unified header for the donut features ---- */
+.donut-feature h3,
+.sankey-card + .container .sankey-hint {
+  letter-spacing: -0.01em;
+}
+
+/* ---- Accessible focus ring (whole site) ---- */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ============================================================
+   SIMPLER 3D STAGE CONTROLS
+   A compact segmented view switcher + a 3-icon glass toolbar,
+   replacing the previous cluster of text buttons.
+   ============================================================ */
+.stage-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  pointer-events: none;
+}
+
+.stage-modes {
+  margin: 0;
+  pointer-events: auto;
+}
+
+.stage-tools {
+  display: inline-flex;
+  gap: 0.4rem;
+  pointer-events: auto;
+}
+
+.stage-tool {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(8, 15, 30, 0.55);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: #e8f3ff;
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease, color 180ms ease;
+}
+.stage-tool:hover {
+  background: rgba(30, 58, 99, 0.72);
+  border-color: rgba(56, 189, 248, 0.6);
+  transform: translateY(-1px);
+}
+.stage-tool svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.stage-tool .ic-play,
+.stage-tool .ic-stop {
+  fill: currentColor;
+  stroke: none;
+}
+
+/* Tour button is the primary action — accent it. */
+#stage-tour {
+  background: linear-gradient(135deg, rgba(125, 211, 252, 0.95), rgba(14, 165, 233, 0.95));
+  border-color: transparent;
+  color: #04121f;
+}
+#stage-tour:hover {
+  background: linear-gradient(135deg, #7dd3fc, #38bdf8);
+}
+#stage-tour.is-touring {
+  background: rgba(8, 15, 30, 0.6);
+  color: #fde68a;
+  border-color: rgba(245, 158, 11, 0.7);
+}
+
+/* Icon toggles */
+.stage-tool .ic-stop { display: none; }
+#stage-tour.is-touring .ic-play { display: none; }
+#stage-tour.is-touring .ic-stop { display: block; }
+#stage-rotate .ic-rotate { display: none; }
+#stage-rotate.is-paused .ic-pause { display: none; }
+#stage-rotate.is-paused .ic-rotate { display: block; }
+#stage-rotate.is-paused { color: #fbbf24; border-color: rgba(251, 191, 36, 0.5); }
+
+/* ============================================================
+   DATA PAGE — glass toolbar + table
+   ============================================================ */
+.filters {
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: inset 0 1px 0 var(--glass-edge);
+}
+.filters input[type="search"],
+.filters select {
+  background: var(--glass-bg-2);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+}
+.jump-nav a {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.pill-toggle {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+thead th {
+  background: var(--glass-bg-2);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+/* ---- Footer: institutional ---- */
+.site-footer {
+  border-top: 1px solid var(--glass-border);
+}
+.site-footer strong {
+  letter-spacing: 0.01em;
 }
