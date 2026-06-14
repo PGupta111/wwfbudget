@@ -127,7 +127,15 @@
         <strong>scroll</strong> to zoom, and <strong>hover or tap</strong> a
         column for the details.
       </p>
+      <div class="stage-modes" id="stage-modes" role="tablist" aria-label="3D view">
+        <button type="button" class="stage-mode is-active" data-mode="bars">Spending&nbsp;· bars</button>
+        <button type="button" class="stage-mode" data-mode="pie">Spending&nbsp;· pie</button>
+        <button type="button" class="stage-mode" data-mode="revenue">Revenue&nbsp;· pie</button>
+      </div>
       <div class="stage-actions">
+        <button type="button" class="stage-btn stage-btn--accent" id="stage-tour">
+          <span class="stage-tour-icon" aria-hidden="true">&#9654;</span> Take the tour
+        </button>
         <button type="button" class="stage-btn" id="stage-rotate" aria-pressed="true">
           <span class="stage-btn-dot"></span> Pause rotation
         </button>

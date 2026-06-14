@@ -1,11 +1,13 @@
-// West Windsor 2026 Budget Visualizer — interactive 3D centerpiece.
+// West Windsor 2026 Budget Visualizer — interactive 3D engine.
 //
-// Renders the municipal budget as a ring of glowing columns (one per spending
-// category, height proportional to spending) around a luminous core that
-// represents the pooled budget, with continuous particle streams flowing from
-// the core out to each column. Built on a locally-vendored Three.js with
-// shadows, fog, and UnrealBloom post-processing. Falls back gracefully when
-// WebGL is unavailable — the caller keeps the 2D donut/Sankey views below.
+// One cinematic WebGL stage with several switchable views of the same verified
+// data:
+//   • "bars"     — a ring of glowing columns (height ∝ spending) around a
+//                  luminous budget core, with particle streams flowing out.
+//   • "pie"      — a 3D pie of spending categories (angle ∝ spending).
+//   • "revenue"  — a 3D pie of where the money comes from.
+// Plus a guided camera tour, a cinematic load reveal, hover tooltips, a
+// click-to-focus detail panel, and a graceful no-WebGL fallback.
 
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
@@ -18,8 +20,11 @@ import {
   compactDollars,
   dollars,
   getSpendingByGroup,
+  getRevenueSources,
   getDepartmentBreakdown,
+  getMiscRevenueBreakdown,
   GROUP_DETAILS,
+  REVENUE_DETAILS,
 } from "./helpers.js";
 
 const BG_TOP = "#0c1730";
@@ -37,7 +42,6 @@ export function isWebGLAvailable() {
   }
 }
 
-/** Resolve a CSS custom-property color (e.g. "var(--grp-9)") to a hex int. */
 function resolveColorHex(cssColor) {
   let value = cssColor;
   if (typeof cssColor === "string" && cssColor.startsWith("var(")) {
@@ -47,7 +51,6 @@ function resolveColorHex(cssColor) {
   return new THREE.Color(value || "#64748b");
 }
 
-/** Build a vertical gradient background texture for the scene. */
 function makeBackgroundTexture(top, bottom) {
   const canvas = document.createElement("canvas");
   canvas.width = 16;
@@ -63,17 +66,49 @@ function makeBackgroundTexture(top, bottom) {
   return tex;
 }
 
+const ease = (x) => 1 - Math.pow(1 - x, 3);
+
 export function initBudget3D(data, opts = {}) {
   const canvas = document.getElementById(opts.canvasId || "budget-3d");
   if (!canvas || !isWebGLAvailable()) return null;
 
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const groups = getSpendingByGroup(data);
-  const total = data.headline.total_budget.amount;
-  const maxAmount = Math.max(...groups.map((g) => g.amount));
 
-  // ---- Renderer / scene / camera -----------------------------------------
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+  // ---- Data views ----------------------------------------------------------
+  const totalBudget = data.headline.total_budget.amount;
+  const spending = getSpendingByGroup(data);
+  const revenue = getRevenueSources(data);
+  const spendingTotal = spending.reduce((s, g) => s + g.amount, 0);
+  const revenueTotal = revenue.reduce((s, r) => s + r.amount, 0);
+
+  function spendingItems() {
+    return spending.map((g) => ({
+      name: g.group,
+      amount: g.amount,
+      pct: (g.amount / totalBudget) * 100,
+      color: resolveColorHex(g.color),
+      blurb: GROUP_DETAILS[g.group] || g.blurb || "",
+      kind: "Spending category",
+      getBreakdown: () => getDepartmentBreakdown(data, g.group).slice(0, 8),
+    }));
+  }
+  function revenueItems() {
+    return revenue.map((r) => ({
+      name: r.label,
+      amount: r.amount,
+      pct: (r.amount / revenueTotal) * 100,
+      color: resolveColorHex(r.color),
+      blurb: REVENUE_DETAILS[r.label] || "",
+      kind: "Revenue source",
+      getBreakdown: () =>
+        r.label === "Fees, state aid & other revenue"
+          ? getMiscRevenueBreakdown(data).slice(0, 8)
+          : [],
+    }));
+  }
+
+  // ---- Renderer / scene / camera -------------------------------------------
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -83,25 +118,27 @@ export function initBudget3D(data, opts = {}) {
 
   const scene = new THREE.Scene();
   scene.background = makeBackgroundTexture(BG_TOP, BG_BOTTOM);
-  scene.fog = new THREE.FogExp2(0x070d1c, 0.018);
+  scene.fog = new THREE.FogExp2(0x070d1c, 0.017);
 
   const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 200);
-  const HOME_POS = new THREE.Vector3(0.5, 12, 23);
-  const HOME_TARGET = new THREE.Vector3(0, 3.6, 0);
-  camera.position.copy(HOME_POS);
+  // Per-mode "home" camera framing.
+  const HOMES = {
+    bars: { pos: new THREE.Vector3(0.5, 12, 23), target: new THREE.Vector3(0, 3.6, 0) },
+    pie: { pos: new THREE.Vector3(0, 17, 17), target: new THREE.Vector3(0, 0.8, 0) },
+    revenue: { pos: new THREE.Vector3(0, 16, 16), target: new THREE.Vector3(0, 0.8, 0) },
+  };
 
   const controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.copy(HOME_TARGET);
   controls.enableDamping = true;
   controls.dampingFactor = 0.06;
   controls.enablePan = false;
-  controls.minDistance = 12;
-  controls.maxDistance = 42;
+  controls.minDistance = 11;
+  controls.maxDistance = 46;
   controls.maxPolarAngle = Math.PI * 0.49;
   controls.autoRotate = !reduceMotion;
-  controls.autoRotateSpeed = 0.55;
+  controls.autoRotateSpeed = 0.5;
 
-  // ---- Lighting ------------------------------------------------------------
+  // ---- Lighting / ground (persistent) --------------------------------------
   scene.add(new THREE.HemisphereLight(0x9ecbff, 0x0a1020, 0.55));
   scene.add(new THREE.AmbientLight(0xffffff, 0.18));
 
@@ -111,10 +148,10 @@ export function initBudget3D(data, opts = {}) {
   key.shadow.mapSize.set(2048, 2048);
   key.shadow.camera.near = 1;
   key.shadow.camera.far = 80;
-  key.shadow.camera.left = -22;
-  key.shadow.camera.right = 22;
-  key.shadow.camera.top = 22;
-  key.shadow.camera.bottom = -22;
+  key.shadow.camera.left = -24;
+  key.shadow.camera.right = 24;
+  key.shadow.camera.top = 24;
+  key.shadow.camera.bottom = -24;
   key.shadow.bias = -0.0004;
   scene.add(key);
 
@@ -125,7 +162,6 @@ export function initBudget3D(data, opts = {}) {
   rimViolet.position.set(15, 5, -14);
   scene.add(rimViolet);
 
-  // ---- Ground --------------------------------------------------------------
   const ground = new THREE.Mesh(
     new THREE.CircleGeometry(60, 96),
     new THREE.MeshStandardMaterial({ color: 0x0a1224, roughness: 0.82, metalness: 0.2 })
@@ -140,120 +176,151 @@ export function initBudget3D(data, opts = {}) {
   grid.position.y = 0.01;
   scene.add(grid);
 
-  // ---- Central core (pooled budget) ---------------------------------------
-  const coreGroup = new THREE.Group();
-  scene.add(coreGroup);
-  const coreHeight = 3.0;
-  const core = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(1.3, 2),
-    new THREE.MeshStandardMaterial({
-      color: 0x0ea5e9,
-      emissive: 0x38bdf8,
-      emissiveIntensity: 1.05,
-      roughness: 0.25,
-      metalness: 0.4,
-    })
-  );
-  core.position.y = coreHeight;
-  core.castShadow = true;
-  coreGroup.add(core);
+  // ---- Content group (mode-specific) ---------------------------------------
+  const content = new THREE.Group();
+  scene.add(content);
 
-  const ring = new THREE.Mesh(
-    new THREE.TorusGeometry(2.6, 0.06, 16, 120),
-    new THREE.MeshStandardMaterial({ color: 0x7dd3fc, emissive: 0x38bdf8, emissiveIntensity: 1.55, roughness: 0.3 })
-  );
-  ring.position.y = coreHeight;
-  ring.rotation.x = Math.PI / 2;
-  coreGroup.add(ring);
-  const ring2 = ring.clone();
-  ring2.scale.setScalar(1.35);
-  ring2.rotation.x = Math.PI / 2.6;
-  coreGroup.add(ring2);
-
-  const coreTop = new THREE.Vector3(0, coreHeight + 1.6, 0);
-
-  // ---- Category columns ----------------------------------------------------
-  const ringRadius = 9.2;
-  const columns = [];
-  const colGeoCache = new Map();
-
-  groups.forEach((g, i) => {
-    const angle = (i / groups.length) * Math.PI * 2;
-    const cx = Math.cos(angle) * ringRadius;
-    const cz = Math.sin(angle) * ringRadius;
-    const h = 0.6 + Math.sqrt(g.amount / maxAmount) * 8.2; // sqrt keeps small ones visible
-
-    const w = 1.7;
-    const key2 = h.toFixed(2);
-    let geo = colGeoCache.get(key2);
-    if (!geo) {
-      geo = new RoundedBoxGeometry(w, h, w, 4, 0.18);
-      geo.translate(0, h / 2, 0); // base sits on the ground so it grows upward
-      colGeoCache.set(key2, geo);
-    }
-    const color = resolveColorHex(g.color);
-    const mat = new THREE.MeshStandardMaterial({
-      color,
-      emissive: color.clone().multiplyScalar(0.6),
-      emissiveIntensity: 0.35,
-      roughness: 0.32,
-      metalness: 0.55,
-    });
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.set(cx, 0, cz);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    mesh.scale.y = reduceMotion ? 1 : 0.0001;
-    scene.add(mesh);
-
-    // Glowing pad beneath each column.
-    const pad = new THREE.Mesh(
-      new THREE.CircleGeometry(1.5, 48),
-      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.12 })
-    );
-    pad.rotation.x = -Math.PI / 2;
-    pad.position.set(cx, 0.02, cz);
-    scene.add(pad);
-
-    columns.push({
-      group: g.group,
-      amount: g.amount,
-      pct: (g.amount / total) * 100,
-      blurb: GROUP_DETAILS[g.group] || g.blurb || "",
-      color,
-      mesh,
-      mat,
-      height: h,
-      top: new THREE.Vector3(cx, h, cz),
-      baseEmissive: 0.35,
-      hovered: false,
-      selected: false,
-    });
-  });
-
-  // ---- Particle money-flow -------------------------------------------------
-  const PARTICLES = reduceMotion ? 0 : Math.min(1600, 110 * columns.length);
+  let mode = "bars";
+  let interactives = []; // { mesh, name, amount, pct, blurb, color, kind, top, midDir, getBreakdown }
+  let particles = [];
   let points = null;
-  const particles = [];
-  if (PARTICLES > 0) {
+  let core = null;
+  let rings = [];
+  let introT = 0;
+  const _v = new THREE.Vector3();
+  const coreTop = new THREE.Vector3(0, 4.6, 0);
+
+  function disposeMesh(obj) {
+    obj.traverse?.((c) => {
+      if (c.geometry) c.geometry.dispose();
+      if (c.material) {
+        (Array.isArray(c.material) ? c.material : [c.material]).forEach((m) => m.dispose());
+      }
+    });
+  }
+
+  function clearContent() {
+    hovered = null;
+    selected = null;
+    hideTooltip();
+    while (content.children.length) {
+      const c = content.children.pop();
+      disposeMesh(c);
+    }
+    if (points) {
+      points.geometry.dispose();
+      points.material.dispose();
+      points = null;
+    }
+    particles = [];
+    interactives = [];
+    core = null;
+    rings = [];
+    // remove labels
+    labelEls.forEach((el) => el.remove());
+    labelEls.length = 0;
+  }
+
+  // ---- Builders ------------------------------------------------------------
+  function buildBars() {
+    const maxAmount = Math.max(...spending.map((g) => g.amount));
+    const ringRadius = 9.2;
+    const items = spendingItems();
+    const geoCache = new Map();
+
+    items.forEach((it, i) => {
+      const angle = (i / items.length) * Math.PI * 2;
+      const cx = Math.cos(angle) * ringRadius;
+      const cz = Math.sin(angle) * ringRadius;
+      const h = 0.6 + Math.sqrt(it.amount / maxAmount) * 8.2;
+      const w = 1.7;
+      const cacheKey = h.toFixed(2);
+      let geo = geoCache.get(cacheKey);
+      if (!geo) {
+        geo = new RoundedBoxGeometry(w, h, w, 4, 0.18);
+        geo.translate(0, h / 2, 0);
+        geoCache.set(cacheKey, geo);
+      }
+      const mat = new THREE.MeshStandardMaterial({
+        color: it.color,
+        emissive: it.color.clone().multiplyScalar(0.6),
+        emissiveIntensity: 0.35,
+        roughness: 0.32,
+        metalness: 0.55,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(cx, 0, cz);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.scale.y = reduceMotion ? 1 : 0.0001;
+      content.add(mesh);
+
+      const pad = new THREE.Mesh(
+        new THREE.CircleGeometry(1.5, 40),
+        new THREE.MeshBasicMaterial({ color: it.color, transparent: true, opacity: 0.12 })
+      );
+      pad.rotation.x = -Math.PI / 2;
+      pad.position.set(cx, 0.02, cz);
+      content.add(pad);
+
+      interactives.push({
+        ...it,
+        mesh,
+        mat,
+        baseEmissive: 0.35,
+        height: h,
+        top: new THREE.Vector3(cx, h, cz),
+        homePos: new THREE.Vector3(cx, 0, cz),
+        midDir: new THREE.Vector3(cx, 0, cz).normalize(),
+      });
+    });
+
+    // Core + rings.
+    core = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(1.3, 2),
+      new THREE.MeshStandardMaterial({
+        color: 0x0ea5e9,
+        emissive: 0x38bdf8,
+        emissiveIntensity: 1.05,
+        roughness: 0.25,
+        metalness: 0.4,
+      })
+    );
+    core.position.y = 3.0;
+    core.castShadow = true;
+    content.add(core);
+    const ringMat = new THREE.MeshStandardMaterial({
+      color: 0x7dd3fc,
+      emissive: 0x38bdf8,
+      emissiveIntensity: 1.55,
+      roughness: 0.3,
+    });
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(2.6, 0.06, 16, 120), ringMat);
+    ring.position.y = 3.0;
+    ring.rotation.x = Math.PI / 2;
+    content.add(ring);
+    const ring2 = ring.clone();
+    ring2.scale.setScalar(1.35);
+    ring2.rotation.x = Math.PI / 2.6;
+    content.add(ring2);
+    rings = [ring, ring2];
+
+    buildParticles();
+    buildLabels((it) => it.top.clone().add(new THREE.Vector3(0, 0.9, 0)));
+  }
+
+  function buildParticles() {
+    const PARTICLES = reduceMotion ? 0 : Math.min(1600, 110 * interactives.length);
+    if (PARTICLES <= 0) return;
     const positions = new Float32Array(PARTICLES * 3);
     const colors = new Float32Array(PARTICLES * 3);
-    const totalCol = columns.reduce((s, c) => s + c.amount, 0);
+    const totalCol = interactives.reduce((s, c) => s + c.amount, 0);
     let p = 0;
-    for (const col of columns) {
+    for (const col of interactives) {
       const count = Math.max(8, Math.round((col.amount / totalCol) * PARTICLES));
-      const ctrl = new THREE.Vector3(
-        col.top.x * 0.45,
-        coreHeight + 6 + Math.random() * 2,
-        col.top.z * 0.45
-      );
+      const ctrl = new THREE.Vector3(col.top.x * 0.45, 9 + Math.random() * 2, col.top.z * 0.45);
       for (let k = 0; k < count && p < PARTICLES; k++, p++) {
-        particles.push({
-          col,
-          ctrl,
-          t: Math.random(),
-          speed: 0.12 + Math.random() * 0.16,
-        });
+        particles.push({ col, ctrl, t: Math.random(), speed: 0.12 + Math.random() * 0.16 });
         colors[p * 3] = col.color.r;
         colors[p * 3 + 1] = col.color.g;
         colors[p * 3 + 2] = col.color.b;
@@ -275,28 +342,73 @@ export function initBudget3D(data, opts = {}) {
         sizeAttenuation: true,
       })
     );
-    scene.add(points);
+    content.add(points);
   }
 
-  const _v = new THREE.Vector3();
-  function quadBezier(out, p0, p1, p2, t) {
-    const u = 1 - t;
-    out.set(
-      u * u * p0.x + 2 * u * t * p1.x + t * t * p2.x,
-      u * u * p0.y + 2 * u * t * p1.y + t * t * p2.y,
-      u * u * p0.z + 2 * u * t * p1.z + t * t * p2.z
-    );
-    return out;
+  function buildPie(items, total, { radius = 6.6, height = 1.7 } = {}) {
+    let a0 = -Math.PI / 2;
+    items.forEach((it) => {
+      const frac = it.amount / total;
+      const span = Math.max(frac * Math.PI * 2, 0.012);
+      const a1 = a0 + span;
+      const mid = (a0 + a1) / 2;
+      const geo = new THREE.CylinderGeometry(radius, radius, height, 64, 1, false, a0, span);
+      geo.translate(0, height / 2, 0);
+      const mat = new THREE.MeshStandardMaterial({
+        color: it.color,
+        emissive: it.color.clone().multiplyScalar(0.55),
+        emissiveIntensity: 0.32,
+        roughness: 0.34,
+        metalness: 0.5,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      const midDir = new THREE.Vector3(Math.cos(mid), 0, Math.sin(mid));
+      mesh.scale.setScalar(reduceMotion ? 1 : 0.0001);
+      content.add(mesh);
+
+      interactives.push({
+        ...it,
+        mesh,
+        mat,
+        baseEmissive: 0.32,
+        height,
+        midDir,
+        homePos: new THREE.Vector3(0, 0, 0),
+        top: midDir.clone().multiplyScalar(radius * 0.62).setY(height + 0.15),
+      });
+      a0 = a1;
+    });
+    buildLabels((it) => it.midDir.clone().multiplyScalar(radius * 0.66).setY(height + 0.5));
   }
 
-  // ---- Post-processing (bloom) --------------------------------------------
+  // ---- Labels (HTML projected) ---------------------------------------------
+  const labelLayer = opts.labelLayer || document.getElementById("stage-labels");
+  const labelEls = [];
+  let labelAnchor = () => new THREE.Vector3();
+  function buildLabels(anchorFn) {
+    labelAnchor = anchorFn;
+    if (!labelLayer) return;
+    interactives.forEach((it) => {
+      const el = document.createElement("div");
+      el.className = "stage-label";
+      el.innerHTML = `<span>${compactDollars(it.amount)}</span>`;
+      el.style.borderColor = `#${it.color.getHexString()}`;
+      labelLayer.appendChild(el);
+      labelEls.push(el);
+      it.labelEl = el;
+    });
+  }
+
+  // ---- Post-processing -----------------------------------------------------
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
   const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.62, 0.55, 0.82);
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
 
-  // ---- Raycasting / interaction -------------------------------------------
+  // ---- Interaction ---------------------------------------------------------
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   let hovered = null;
@@ -310,20 +422,18 @@ export function initBudget3D(data, opts = {}) {
     pointer.x = (pointerClient.x / rect.width) * 2 - 1;
     pointer.y = -(pointerClient.y / rect.height) * 2 + 1;
   }
-
-  function pickColumn() {
+  function pick() {
     raycaster.setFromCamera(pointer, camera);
-    const hits = raycaster.intersectObjects(columns.map((c) => c.mesh), false);
+    const hits = raycaster.intersectObjects(interactives.map((c) => c.mesh), false);
     if (!hits.length) return null;
-    return columns.find((c) => c.mesh === hits[0].object) || null;
+    return interactives.find((c) => c.mesh === hits[0].object) || null;
   }
-
-  function showTooltip(col) {
-    if (!tooltip || !col) return;
+  function showTooltip(it) {
+    if (!tooltip || !it) return;
     tooltip.innerHTML = `
-      <span class="t3d-swatch" style="background:#${col.color.getHexString()}"></span>
-      <span class="t3d-name">${col.group}</span>
-      <span class="t3d-amount">${dollars(col.amount, 0)} · ${col.pct.toFixed(1)}% of budget</span>`;
+      <span class="t3d-swatch" style="background:#${it.color.getHexString()}"></span>
+      <span class="t3d-name">${it.name}</span>
+      <span class="t3d-amount">${dollars(it.amount, 0)} · ${it.pct.toFixed(1)}%</span>`;
     tooltip.style.left = `${pointerClient.x}px`;
     tooltip.style.top = `${pointerClient.y}px`;
     tooltip.classList.add("visible");
@@ -331,54 +441,53 @@ export function initBudget3D(data, opts = {}) {
   function hideTooltip() {
     if (tooltip) tooltip.classList.remove("visible");
   }
-
-  function setHover(col) {
-    if (hovered === col) return;
-    hovered = col;
-    canvas.style.cursor = col ? "pointer" : "grab";
-    if (!col) hideTooltip();
+  function setHover(it) {
+    if (hovered === it) return;
+    hovered = it;
+    canvas.style.cursor = it ? "pointer" : "grab";
+    if (!it) hideTooltip();
   }
-
   function onPointerMove(e) {
     setPointerFromEvent(e);
-    const col = pickColumn();
-    setHover(col);
-    if (col) showTooltip(col);
+    const it = pick();
+    setHover(it);
+    if (it) showTooltip(it);
   }
-
-  function selectColumn(col) {
-    selected = col;
-    columns.forEach((c) => (c.selected = c === col));
-    if (opts.onSelect) opts.onSelect(col ? buildDetail(col) : null);
-    if (col) {
-      // Ease the camera to frame the chosen column.
+  function buildDetail(it) {
+    return {
+      group: it.name,
+      kind: it.kind,
+      amount: it.amount,
+      pct: it.pct,
+      blurb: it.blurb,
+      colorHex: `#${it.color.getHexString()}`,
+      breakdown: it.getBreakdown ? it.getBreakdown() : [],
+    };
+  }
+  function selectItem(it) {
+    selected = it;
+    interactives.forEach((c) => (c.selectedFlag = c === it));
+    if (opts.onSelect) opts.onSelect(it ? buildDetail(it) : null);
+    if (it) {
+      const off = it.midDir.clone().multiplyScalar(mode === "bars" ? 4 : 9);
       flyTo(
-        new THREE.Vector3(col.top.x * 1.7, col.height + 6, col.top.z * 1.7 + 2),
-        new THREE.Vector3(col.top.x * 0.6, col.height * 0.55, col.top.z * 0.6)
+        new THREE.Vector3(off.x + it.midDir.x * 6, (it.height || 4) + 6, off.z + it.midDir.z * 6 + 2),
+        new THREE.Vector3(it.midDir.x * (mode === "bars" ? 5 : 3), (it.height || 3) * 0.5, it.midDir.z * (mode === "bars" ? 5 : 3))
       );
     }
   }
-
-  function buildDetail(col) {
-    return {
-      group: col.group,
-      amount: col.amount,
-      pct: col.pct,
-      blurb: col.blurb,
-      colorHex: `#${col.color.getHexString()}`,
-      breakdown: getDepartmentBreakdown(data, col.group).slice(0, 8),
-    };
-  }
-
   function onClick(e) {
+    cancelTour();
     setPointerFromEvent(e);
-    const col = pickColumn();
-    if (col) selectColumn(col === selected ? null : col);
-    else selectColumn(null);
+    const it = pick();
+    selectItem(it && it === selected ? null : it);
   }
 
   canvas.addEventListener("pointermove", onPointerMove);
-  canvas.addEventListener("pointerdown", () => (canvas.style.cursor = "grabbing"));
+  canvas.addEventListener("pointerdown", () => {
+    canvas.style.cursor = "grabbing";
+    cancelTour();
+  });
   canvas.addEventListener("pointerup", () => (canvas.style.cursor = hovered ? "pointer" : "grab"));
   canvas.addEventListener("click", onClick);
   canvas.addEventListener("pointerleave", () => {
@@ -386,8 +495,9 @@ export function initBudget3D(data, opts = {}) {
     hideTooltip();
   });
 
-  // ---- Camera fly-to -------------------------------------------------------
+  // ---- Camera fly-to + tour ------------------------------------------------
   let fly = null;
+  let rotateOn = !reduceMotion;
   function flyTo(pos, target, dur = 900) {
     fly = {
       fromPos: camera.position.clone(),
@@ -399,45 +509,76 @@ export function initBudget3D(data, opts = {}) {
     };
     controls.autoRotate = false;
   }
+
+  let tourTimers = [];
+  let touring = false;
+  function cancelTour() {
+    if (!touring) return;
+    touring = false;
+    tourTimers.forEach((t) => clearTimeout(t));
+    tourTimers = [];
+    controls.autoRotate = rotateOn;
+    opts.onTour?.(false);
+  }
+  function startTour() {
+    cancelTour();
+    if (!interactives.length) return;
+    touring = true;
+    opts.onTour?.(true);
+    selectItem(null);
+    controls.autoRotate = false;
+    // Visit the four largest items, then return home.
+    const sorted = [...interactives].sort((a, b) => b.amount - a.amount).slice(0, 4);
+    let delay = 0;
+    const step = 2600;
+    sorted.forEach((it) => {
+      tourTimers.push(setTimeout(() => touring && selectItem(it), delay));
+      delay += step;
+    });
+    tourTimers.push(
+      setTimeout(() => {
+        if (!touring) return;
+        selectItem(null);
+        flyTo(HOMES[mode].pos, HOMES[mode].target, 1400);
+        touring = false;
+        opts.onTour?.(false);
+        if (!reduceMotion) setTimeout(() => (controls.autoRotate = rotateOn), 1500);
+      }, delay + 400)
+    );
+  }
+
   function resetView() {
-    selectColumn(null);
-    flyTo(HOME_POS, HOME_TARGET);
+    cancelTour();
+    selectItem(null);
+    flyTo(HOMES[mode].pos, HOMES[mode].target);
     if (!reduceMotion) setTimeout(() => (controls.autoRotate = rotateOn), 950);
   }
 
-  // ---- Public-ish controls -------------------------------------------------
-  let rotateOn = !reduceMotion;
-  const api = {
-    toggleRotate() {
-      rotateOn = !rotateOn;
-      controls.autoRotate = rotateOn;
-      return rotateOn;
-    },
-    resetView,
-    focusGroup(name) {
-      const col = columns.find((c) => c.group === name);
-      if (col) selectColumn(col);
-    },
-    hoverGroup(name) {
-      const col = name ? columns.find((c) => c.group === name) : null;
-      setHover(col);
-    },
-    columns,
-    dispose,
-  };
-
-  // ---- Labels (HTML, projected each frame) --------------------------------
-  const labelLayer = opts.labelLayer || document.getElementById("stage-labels");
-  const labelEls = [];
-  if (labelLayer) {
-    columns.forEach((col) => {
-      const el = document.createElement("div");
-      el.className = "stage-label";
-      el.innerHTML = `<span>${compactDollars(col.amount)}</span>`;
-      el.style.borderColor = `#${col.color.getHexString()}`;
-      labelLayer.appendChild(el);
-      labelEls.push(el);
-    });
+  // ---- Mode switching ------------------------------------------------------
+  function setMode(next, { animateCamera = true } = {}) {
+    if (next === mode && interactives.length) return;
+    cancelTour();
+    mode = next;
+    clearContent();
+    if (mode === "bars") buildBars();
+    else if (mode === "pie") buildPie(spendingItems(), spendingTotal, { radius: 6.6, height: 1.7 });
+    else if (mode === "revenue") buildPie(revenueItems(), revenueTotal, { radius: 6.8, height: 2.2 });
+    introT = reduceMotion ? 1 : 0;
+    if (animateCamera && !reduceMotion) {
+      camera.position.copy(HOMES[mode].pos).multiplyScalar(1.25);
+      flyTo(HOMES[mode].pos, HOMES[mode].target, 1300);
+    } else {
+      camera.position.copy(HOMES[mode].pos);
+      controls.target.copy(HOMES[mode].target);
+    }
+    if (!reduceMotion) {
+      controls.autoRotate = false;
+      setTimeout(() => !touring && (controls.autoRotate = rotateOn), 1400);
+    }
+    opts.onItems?.(
+      interactives.map((it) => ({ name: it.name, colorHex: `#${it.color.getHexString()}` })),
+      mode
+    );
   }
 
   // ---- Resize --------------------------------------------------------------
@@ -453,16 +594,20 @@ export function initBudget3D(data, opts = {}) {
   }
   const ro = new ResizeObserver(resize);
   ro.observe(canvas);
-  resize();
 
-  // ---- Animation loop ------------------------------------------------------
+  // ---- Loop ----------------------------------------------------------------
   const clock = new THREE.Clock();
-  let introT = reduceMotion ? 1 : 0;
   let running = false;
   let rafId = null;
 
-  function ease(x) {
-    return 1 - Math.pow(1 - x, 3);
+  function quadBezier(out, p0, p1, p2, t) {
+    const u = 1 - t;
+    out.set(
+      u * u * p0.x + 2 * u * t * p1.x + t * t * p2.x,
+      u * u * p0.y + 2 * u * t * p1.y + t * t * p2.y,
+      u * u * p0.z + 2 * u * t * p1.z + t * t * p2.z
+    );
+    return out;
   }
 
   function tick() {
@@ -470,32 +615,41 @@ export function initBudget3D(data, opts = {}) {
     const dt = Math.min(clock.getDelta(), 0.05);
     const time = clock.elapsedTime;
 
-    // Intro: columns rise with a stagger.
     if (introT < 1) {
-      introT = Math.min(1, introT + dt / 1.6);
-      columns.forEach((col, i) => {
-        const local = THREE.MathUtils.clamp((introT - i * 0.045) / 0.5, 0, 1);
-        col.mesh.scale.y = Math.max(0.0001, ease(local));
+      introT = Math.min(1, introT + dt / 1.5);
+      interactives.forEach((it, i) => {
+        const local = THREE.MathUtils.clamp((introT - i * 0.04) / 0.5, 0, 1);
+        const e = ease(local);
+        if (mode === "bars") it.mesh.scale.y = Math.max(0.0001, e);
+        else it.mesh.scale.setScalar(Math.max(0.0001, e));
       });
     }
 
-    // Core pulse + ring spin.
-    const pulse = 1 + Math.sin(time * 1.6) * 0.04;
-    core.scale.setScalar(pulse);
-    core.rotation.y += dt * 0.25;
-    ring.rotation.z += dt * 0.6;
-    ring2.rotation.z -= dt * 0.4;
+    if (core) {
+      const pulse = 1 + Math.sin(time * 1.6) * 0.04;
+      core.scale.setScalar(pulse);
+      core.rotation.y += dt * 0.25;
+      if (rings[0]) rings[0].rotation.z += dt * 0.6;
+      if (rings[1]) rings[1].rotation.z -= dt * 0.4;
+    }
 
-    // Hover / selection emphasis.
-    columns.forEach((col) => {
-      const active = col === hovered || col.selected;
-      const targetEmissive = active ? 1.25 : col.baseEmissive;
-      col.mat.emissiveIntensity += (targetEmissive - col.mat.emissiveIntensity) * 0.18;
-      const targetLift = col.selected ? 0.6 : 0;
-      col.mesh.position.y += (targetLift - col.mesh.position.y) * 0.15;
+    interactives.forEach((it) => {
+      const active = it === hovered || it.selectedFlag;
+      const targetEmissive = active ? 1.2 : it.baseEmissive;
+      it.mat.emissiveIntensity += (targetEmissive - it.mat.emissiveIntensity) * 0.18;
+      if (mode === "bars") {
+        const lift = it.selectedFlag ? 0.6 : 0;
+        it.mesh.position.y += (lift - it.mesh.position.y) * 0.15;
+      } else {
+        // Explode the slice outward when active.
+        const out = active ? 0.7 : 0;
+        const tx = it.midDir.x * out;
+        const tz = it.midDir.z * out;
+        it.mesh.position.x += (tx - it.mesh.position.x) * 0.15;
+        it.mesh.position.z += (tz - it.mesh.position.z) * 0.15;
+      }
     });
 
-    // Particles flow along core -> column arcs.
     if (points && introT > 0.15) {
       const arr = points.geometry.attributes.position.array;
       for (let i = 0; i < particles.length; i++) {
@@ -510,7 +664,6 @@ export function initBudget3D(data, opts = {}) {
       points.geometry.attributes.position.needsUpdate = true;
     }
 
-    // Camera fly-to interpolation.
     if (fly) {
       const k = ease(THREE.MathUtils.clamp((performance.now() - fly.start) / fly.dur, 0, 1));
       camera.position.lerpVectors(fly.fromPos, fly.toPos, k);
@@ -526,23 +679,24 @@ export function initBudget3D(data, opts = {}) {
   function updateLabels() {
     if (!labelEls.length) return;
     const rect = canvas.getBoundingClientRect();
-    columns.forEach((col, i) => {
-      const el = labelEls[i];
-      _v.copy(col.top).add(new THREE.Vector3(0, 0.9, 0));
+    interactives.forEach((it) => {
+      const el = it.labelEl;
+      if (!el) return;
+      // Anchor is the home position; for pie slices add the live explode offset
+      // so labels track slices as they slide outward.
+      _v.copy(labelAnchor(it));
+      if (mode !== "bars") _v.add(new THREE.Vector3(it.mesh.position.x, 0, it.mesh.position.z));
       _v.project(camera);
-      const behind = _v.z > 1;
-      if (behind) {
+      if (_v.z > 1) {
         el.style.opacity = "0";
         return;
       }
       const x = (_v.x * 0.5 + 0.5) * rect.width;
       const y = (-_v.y * 0.5 + 0.5) * rect.height;
-      // Fade columns on the far side of the ring for legibility.
-      const camDist = camera.position.distanceTo(col.top);
-      const near = THREE.MathUtils.clamp(1 - (camDist - controls.minDistance) / 34, 0.25, 1);
+      const active = it === hovered || it.selectedFlag;
       el.style.transform = `translate(-50%,-50%) translate(${x}px, ${y}px)`;
-      el.style.opacity = String((col === hovered || col.selected ? 1 : 0.55 * near));
-      el.classList.toggle("is-active", col === hovered || col.selected);
+      el.style.opacity = String(active ? 1 : 0.62);
+      el.classList.toggle("is-active", active);
     });
   }
 
@@ -560,12 +714,24 @@ export function initBudget3D(data, opts = {}) {
   }
   function dispose() {
     stop();
+    cancelTour();
     ro.disconnect();
+    clearContent();
     renderer.dispose();
     composer.dispose?.();
   }
 
-  // Only animate while the stage is on screen (saves battery / GPU).
+  // ---- Boot ----------------------------------------------------------------
+  setMode("bars", { animateCamera: false });
+  resize();
+  // Cinematic reveal: ease the camera in from farther out on first load.
+  if (!reduceMotion) {
+    camera.position.set(0, 24, 44);
+    controls.autoRotate = false;
+    flyTo(HOMES.bars.pos, HOMES.bars.target, 2200);
+    setTimeout(() => !touring && (controls.autoRotate = rotateOn), 2300);
+  }
+
   if ("IntersectionObserver" in window) {
     const io = new IntersectionObserver(
       (entries) => entries.forEach((e) => (e.isIntersecting ? start() : stop())),
@@ -576,7 +742,27 @@ export function initBudget3D(data, opts = {}) {
     start();
   }
 
-  api.start = start;
-  api.stop = stop;
-  return api;
+  return {
+    setMode,
+    getMode: () => mode,
+    toggleRotate() {
+      rotateOn = !rotateOn;
+      controls.autoRotate = rotateOn;
+      cancelTour();
+      return rotateOn;
+    },
+    startTour,
+    cancelTour,
+    resetView,
+    focusItem(name) {
+      const it = interactives.find((c) => c.name === name);
+      if (it) selectItem(it);
+    },
+    hoverItem(name) {
+      setHover(name ? interactives.find((c) => c.name === name) : null);
+    },
+    start,
+    stop,
+    dispose,
+  };
 }

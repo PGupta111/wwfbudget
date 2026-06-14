@@ -2728,3 +2728,60 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .stage-btn-dot { box-shadow: none; }
 }
+
+/* ---- 3D stage: view-mode switcher + tour button ---- */
+.stage-modes {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin: 0 0 0.7rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: rgba(8, 15, 30, 0.55);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  backdrop-filter: blur(8px);
+  pointer-events: auto;
+}
+
+.stage-mode {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #c5d3e6;
+  border: none;
+  background: transparent;
+  padding: 0.42rem 0.85rem;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.stage-mode:hover { color: #fff; }
+
+.stage-mode.is-active {
+  color: #04121f;
+  background: linear-gradient(135deg, #7dd3fc, #38bdf8);
+  box-shadow: 0 4px 16px rgba(56, 189, 248, 0.35);
+}
+
+.stage-btn--accent {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.9), rgba(14, 165, 233, 0.9));
+  border-color: transparent;
+  color: #04121f;
+  font-weight: 700;
+}
+.stage-btn--accent:hover {
+  background: linear-gradient(135deg, #7dd3fc, #38bdf8);
+  border-color: transparent;
+}
+.stage-btn--accent.is-touring {
+  background: rgba(12, 22, 42, 0.7);
+  color: #e8f3ff;
+  border: 1px solid rgba(245, 158, 11, 0.6);
+}
+.stage-tour-icon { font-size: 0.7rem; }
+.stage-btn--accent.is-touring .stage-tour-icon { display: none; }
+
+@media (max-width: 760px) {
+  .stage-modes { width: 100%; overflow-x: auto; }
+}
