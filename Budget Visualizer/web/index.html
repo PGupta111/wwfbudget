@@ -23,7 +23,7 @@
   (function () {
     try {
       var saved = localStorage.getItem("wwf-theme");
-      document.documentElement.setAttribute("data-theme", saved || "dark");
+      document.documentElement.setAttribute("data-theme", saved || "light");
     } catch (e) {}
   })();
 </script>
@@ -59,7 +59,7 @@
   <div class="container hero-grid">
     <div class="hero-copy">
       <span class="eyebrow">Township of West Windsor &middot; Adopted 2026 Municipal Budget</span>
-      <h1>West Windsor's 2026 municipal budget, explained</h1>
+      <h1>West Windsor's 2026 municipal budget, <em class="serif-accent">explained</em>.</h1>
       <p>
         A resident-friendly guide to where the township's money comes from,
         where it goes, and what it means for your household &mdash; based on
