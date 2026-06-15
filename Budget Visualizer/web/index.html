@@ -40,7 +40,7 @@
         <span>2026 Budget Visualizer</span>
       </span>
     </a>
-    <nav class="site-nav">
+    <nav class="site-nav" id="site-nav">
       <a href="#glance">Overview</a>
       <a href="#explore">Explore</a>
       <a href="#calculator">Your Share</a>
@@ -51,6 +51,9 @@
       <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
         <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"></circle><g><line x1="12" y1="2.5" x2="12" y2="5"></line><line x1="12" y1="19" x2="12" y2="21.5"></line><line x1="2.5" y1="12" x2="5" y2="12"></line><line x1="19" y1="12" x2="21.5" y2="12"></line><line x1="5.1" y1="5.1" x2="6.9" y2="6.9"></line><line x1="17.1" y1="17.1" x2="18.9" y2="18.9"></line><line x1="5.1" y1="18.9" x2="6.9" y2="17.1"></line><line x1="17.1" y1="6.9" x2="18.9" y2="5.1"></line></g></svg>
         <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg>
+      </button>
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
+        <span></span><span></span><span></span>
       </button>
     </div>
   </div>
@@ -307,6 +310,12 @@
           <div class="calc-compare-track">
             <div class="calc-compare-fill" id="compare-fill"></div>
           </div>
+        </div>
+
+        <div class="calc-benchmarks">
+          <div class="calc-benchmarks-title">How that compares to typical homes</div>
+          <div class="calc-benchmarks-rows" id="calc-benchmarks-rows"></div>
+          <p class="calc-benchmarks-note">Illustrative assessed values &mdash; enter yours above to see where it lands.</p>
         </div>
 
         <details class="calc-formula">
