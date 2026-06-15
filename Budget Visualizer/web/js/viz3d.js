@@ -132,11 +132,30 @@ export function initBudget3D(data, opts = {}) {
   controls.enableDamping = true;
   controls.dampingFactor = 0.06;
   controls.enablePan = false;
+  controls.enableZoom = false; // custom wheel handling below (so the page can scroll at the zoom limits)
   controls.minDistance = 11;
   controls.maxDistance = 46;
   controls.maxPolarAngle = Math.PI * 0.49;
   controls.autoRotate = !reduceMotion;
   controls.autoRotateSpeed = 0.5;
+
+  // Custom wheel zoom: zoom within range, but once fully zoomed out (or in),
+  // release the wheel so the page scrolls instead of trapping the user.
+  canvas.addEventListener(
+    "wheel",
+    (e) => {
+      const offset = camera.position.clone().sub(controls.target);
+      const dist = offset.length();
+      const out = e.deltaY > 0;
+      if ((out && dist >= controls.maxDistance - 0.05) || (!out && dist <= controls.minDistance + 0.05)) {
+        return; // at the limit in the scroll direction — let the page scroll
+      }
+      e.preventDefault();
+      const next = THREE.MathUtils.clamp(dist * Math.exp(e.deltaY * 0.0012), controls.minDistance, controls.maxDistance);
+      camera.position.copy(controls.target).add(offset.setLength(next));
+    },
+    { passive: false }
+  );
 
   // ---- Lighting / ground (persistent) --------------------------------------
   scene.add(new THREE.HemisphereLight(0xd2e6ff, 0x16294a, 0.8));
