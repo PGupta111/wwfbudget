@@ -43,7 +43,6 @@
     <nav class="site-nav">
       <a href="#glance">Overview</a>
       <a href="#explore">Explore</a>
-      <a href="#flow">Money Flow</a>
       <a href="#calculator">Your Share</a>
       <a href="#about">FAQ</a>
     </nav>
@@ -76,7 +75,7 @@
         <li>Municipal only</li>
       </ul>
       <div class="hero-actions">
-        <a class="btn btn-primary" href="#flow">See the money flow</a>
+        <a class="btn btn-primary" href="#explore">Explore the budget</a>
         <a class="btn btn-secondary" href="#calculator">Estimate your share</a>
         <a class="btn btn-ghost" href="data.html">Explore the data</a>
       </div>
@@ -139,14 +138,18 @@
         interactive 3D view you can orbit and explore. Hover or tap anything
         for the details behind it.
       </p>
-      <div class="view-toggle" id="view-toggle" role="tablist" aria-label="Choose 2D or 3D">
+      <div class="view-toggle" id="view-toggle" role="tablist" aria-label="Choose a view">
         <button type="button" class="view-opt is-active" data-view="2d" role="tab" aria-selected="true">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 8 8h-8z"/></svg>
-          2D charts
+          Charts
+        </button>
+        <button type="button" class="view-opt" data-view="flow" role="tab" aria-selected="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5c6 0 6 7 16 7M4 12h16M4 19c6 0 6-7 16-7"/></svg>
+          Flow
         </button>
         <button type="button" class="view-opt" data-view="3d" role="tab" aria-selected="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 21 7v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>
-          3D view
+          3D
         </button>
       </div>
     </div>
@@ -181,6 +184,28 @@
         </div>
       </div>
       <p class="donut-hint">Hover or tap a slice &mdash; or a card below &mdash; for details on what it includes.</p>
+    </div>
+  </div>
+
+  <!-- Flow (Sankey) -->
+  <div class="viz-flow" id="viz-flow" hidden>
+    <div class="container">
+      <p class="viz-flow-intro section-intro">
+        Every dollar the township takes in (left) flows into the 2026 budget,
+        then back out into spending (right). Band width shows the size &mdash;
+        click any band or category for details.
+      </p>
+    </div>
+    <div class="sankey-card sankey-card--full">
+      <svg id="sankey-chart" viewBox="0 0 1180 720" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div class="container">
+      <p class="sankey-hint">Click any bar &mdash; or any flow between them &mdash; to see what it covers.</p>
+      <div class="sankey-detail" id="sankey-detail">
+        <div class="sankey-detail-inner" id="sankey-detail-inner"></div>
+      </div>
+      <div class="legend" id="sankey-legend"></div>
+      <p class="source-tag">Sources: Revenues Summary (Sheet 11) and Appropriations (Sheets 12&ndash;30)</p>
     </div>
   </div>
 
@@ -244,34 +269,6 @@
     <div class="yoy-total" id="yoy-total"></div>
     <div class="yoy-grid" id="yoy-grid"></div>
     <p class="source-tag">Source: Appropriations Schedule (Sheets 12&ndash;30), 2025 vs. 2026 columns</p>
-  </div>
-</section>
-
-<!-- ================= MONEY FLOW (SANKEY) ================= -->
-<section class="section" id="flow">
-  <div class="container">
-    <div class="section-head">
-      <span class="eyebrow">The whole township, no typing required</span>
-      <h2>How money flows through the budget</h2>
-      <p class="section-intro">
-        On the left is every dollar the township expects to take in during
-        2026. On the right is how that same money is planned to be spent,
-        grouped into easy-to-understand categories. The width of each band
-        shows how big that piece is &mdash; hover or tap a band for the
-        exact amount.
-      </p>
-    </div>
-  </div>
-  <div class="sankey-card sankey-card--full">
-    <svg id="sankey-chart" viewBox="0 0 1180 720" preserveAspectRatio="xMidYMid meet"></svg>
-  </div>
-  <div class="container">
-    <p class="sankey-hint">Click any bar &mdash; or any flow between them &mdash; to see what it covers.</p>
-    <div class="sankey-detail" id="sankey-detail">
-      <div class="sankey-detail-inner" id="sankey-detail-inner"></div>
-    </div>
-    <div class="legend" id="sankey-legend"></div>
-    <p class="source-tag">Sources: Revenues Summary (Sheet 11) and Appropriations (Sheets 12&ndash;30)</p>
   </div>
 </section>
 
