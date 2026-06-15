@@ -578,10 +578,48 @@ function initStage(data) {
   document.getElementById("stage-panel-close")?.addEventListener("click", () => viz.resetView());
 }
 
+/** Wire the 2D / 3D view toggle. The 3D stage is initialized lazily the first
+ * time it's shown, so a visitor who stays in 2D never pays the WebGL cost. */
+function setupExplore(data) {
+  const toggle = document.getElementById("view-toggle");
+  const viz2d = document.getElementById("viz-2d");
+  const viz3d = document.getElementById("viz-3d");
+  if (!toggle || !viz2d || !viz3d) return;
+
+  let stageStarted = false;
+  const opts = [...toggle.querySelectorAll(".view-opt")];
+
+  function setView(view) {
+    const is3d = view === "3d";
+    opts.forEach((b) => {
+      const on = b.dataset.view === view;
+      b.classList.toggle("is-active", on);
+      b.setAttribute("aria-selected", String(on));
+    });
+    viz3d.hidden = !is3d;
+    viz2d.hidden = is3d;
+    try {
+      localStorage.setItem("wwf-view", view);
+    } catch (e) {}
+    if (is3d && !stageStarted) {
+      stageStarted = true;
+      // Let layout settle so the canvas has a real size before WebGL init.
+      requestAnimationFrame(() => initStage(data));
+    }
+  }
+
+  opts.forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
+
+  let saved = "2d";
+  try {
+    saved = localStorage.getItem("wwf-view") || "2d";
+  } catch (e) {}
+  setView(saved);
+}
+
 async function init() {
   initUI();
   const data = await loadBudget();
-  initStage(data);
 
   const total = data.headline.total_budget.amount;
   renderHeadlineStats(data);
@@ -611,6 +649,7 @@ async function init() {
   renderSankey(data, (node, nodeTotal) => renderSankeyDetail(data, node, nodeTotal ?? total));
   initCalculator(data);
   attachGlossaryTooltips(data);
+  setupExplore(data);
 }
 
 init().catch((err) => {
