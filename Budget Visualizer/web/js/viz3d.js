@@ -464,7 +464,7 @@ export function initBudget3D(data, opts = {}) {
       breakdown: it.getBreakdown ? it.getBreakdown() : [],
     };
   }
-  function selectItem(it) {
+  function selectItem(it, flyDur = 900) {
     selected = it;
     interactives.forEach((c) => (c.selectedFlag = c === it));
     if (opts.onSelect) opts.onSelect(it ? buildDetail(it) : null);
@@ -472,7 +472,8 @@ export function initBudget3D(data, opts = {}) {
       const off = it.midDir.clone().multiplyScalar(mode === "bars" ? 4 : 9);
       flyTo(
         new THREE.Vector3(off.x + it.midDir.x * 6, (it.height || 4) + 6, off.z + it.midDir.z * 6 + 2),
-        new THREE.Vector3(it.midDir.x * (mode === "bars" ? 5 : 3), (it.height || 3) * 0.5, it.midDir.z * (mode === "bars" ? 5 : 3))
+        new THREE.Vector3(it.midDir.x * (mode === "bars" ? 5 : 3), (it.height || 3) * 0.5, it.midDir.z * (mode === "bars" ? 5 : 3)),
+        flyDur
       );
     }
   }
@@ -527,23 +528,23 @@ export function initBudget3D(data, opts = {}) {
     opts.onTour?.(true);
     selectItem(null);
     controls.autoRotate = false;
-    // Visit the four largest items, then return home.
+    // Visit the four largest items, then return home — slow and cinematic.
     const sorted = [...interactives].sort((a, b) => b.amount - a.amount).slice(0, 4);
-    let delay = 0;
-    const step = 2600;
+    let delay = 600;
+    const step = 4600;
     sorted.forEach((it) => {
-      tourTimers.push(setTimeout(() => touring && selectItem(it), delay));
+      tourTimers.push(setTimeout(() => touring && selectItem(it, 1600), delay));
       delay += step;
     });
     tourTimers.push(
       setTimeout(() => {
         if (!touring) return;
         selectItem(null);
-        flyTo(HOMES[mode].pos, HOMES[mode].target, 1400);
+        flyTo(HOMES[mode].pos, HOMES[mode].target, 2200);
         touring = false;
         opts.onTour?.(false);
-        if (!reduceMotion) setTimeout(() => (controls.autoRotate = rotateOn), 1500);
-      }, delay + 400)
+        if (!reduceMotion) setTimeout(() => (controls.autoRotate = rotateOn), 2300);
+      }, delay + 600)
     );
   }
 

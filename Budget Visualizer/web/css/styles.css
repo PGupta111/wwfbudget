@@ -3689,3 +3689,118 @@ h1 { font-size: clamp(2.4rem, 5.2vw, 4rem); }
 .section-head h2 { font-size: clamp(1.7rem, 3.4vw, 2.5rem); margin-bottom: 0.7rem; }
 .section-head .eyebrow { margin-bottom: 0.9rem; }
 .section-intro { font-size: 1.05rem; line-height: 1.65; }
+
+/* ============================================================
+   LAYOUT v2 — centered header, 2D/3D toggle, tighter rhythm,
+   better use of width, and mobile polish.
+   ============================================================ */
+
+:root { --container: 1240px; }
+
+/* ---- Centered 3-part header ---- */
+.site-header .container {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1rem;
+}
+.site-header .brand { justify-self: start; }
+.site-header .site-nav {
+  justify-self: center;
+  flex-wrap: nowrap;
+  gap: 1.5rem;
+}
+.header-actions {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+/* ---- 2D / 3D view toggle ---- */
+.view-toggle {
+  display: inline-flex;
+  gap: 0.3rem;
+  margin-top: 1.3rem;
+  padding: 0.3rem;
+  border-radius: 999px;
+  border: 1px solid var(--panel-border);
+  background: var(--panel);
+  box-shadow: 0 6px 18px rgba(12, 74, 110, 0.08);
+}
+.view-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  border: none;
+  background: transparent;
+  padding: 0.55rem 1.15rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 180ms ease, color 180ms ease;
+}
+.view-opt svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linejoin: round; }
+.view-opt:hover { color: var(--ink); }
+.view-opt.is-active {
+  background: var(--brand-700);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(3, 105, 161, 0.3);
+}
+
+.viz-2d[hidden], .viz-3d[hidden] { display: none; }
+.viz-2d .donut-grid { margin-top: 0.5rem; }
+.viz-3d .stage { margin-top: 1.6rem; }
+.viz-3d .stage { height: min(82vh, 820px); }
+
+/* ---- Tighter vertical rhythm (less dead space) ---- */
+.section { padding: clamp(2.25rem, 4.5vw, 3.75rem) 0; }
+.section-head { margin-bottom: 1.9rem; }
+.donut-grid { margin-top: 1rem; gap: 1.25rem; }
+
+/* ---- Use the horizontal space: FAQ in two columns on wide screens ---- */
+@media (min-width: 940px) {
+  .faq-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.9rem;
+    align-items: start;
+  }
+}
+
+/* ---- Mobile polish ---- */
+@media (max-width: 820px) {
+  .site-header .container {
+    grid-template-columns: auto 1fr;
+    grid-template-areas: "brand actions" "nav nav";
+    gap: 0.5rem 0.75rem;
+    padding-top: 0.55rem;
+    padding-bottom: 0.55rem;
+  }
+  .site-header .brand { grid-area: brand; }
+  .header-actions { grid-area: actions; justify-self: end; }
+  .site-header .site-nav {
+    grid-area: nav;
+    justify-self: stretch;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 1.1rem;
+    padding-bottom: 0.15rem;
+  }
+  /* Theme toggle now lives in header-actions, so undo the old absolute pin. */
+  .theme-toggle { position: static !important; }
+}
+
+@media (max-width: 640px) {
+  .section { padding: 1.9rem 0; }
+  .section-head { margin-bottom: 1.4rem; }
+  .view-toggle { width: 100%; }
+  .view-opt { flex: 1; justify-content: center; }
+  .viz-3d .stage { height: 72vh; min-height: 460px; }
+  .donut-grid { gap: 1rem; }
+  .stats-grid { gap: 1rem; }
+}

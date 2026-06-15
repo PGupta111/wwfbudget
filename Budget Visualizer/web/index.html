@@ -42,15 +42,18 @@
     </a>
     <nav class="site-nav">
       <a href="#glance">Overview</a>
+      <a href="#explore">Explore</a>
       <a href="#flow">Money Flow</a>
       <a href="#calculator">Your Share</a>
       <a href="#about">FAQ</a>
+    </nav>
+    <div class="header-actions">
       <a href="data.html" class="nav-cta">Data</a>
       <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
         <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"></circle><g><line x1="12" y1="2.5" x2="12" y2="5"></line><line x1="12" y1="19" x2="12" y2="21.5"></line><line x1="2.5" y1="12" x2="5" y2="12"></line><line x1="19" y1="12" x2="21.5" y2="12"></line><line x1="5.1" y1="5.1" x2="6.9" y2="6.9"></line><line x1="17.1" y1="17.1" x2="18.9" y2="18.9"></line><line x1="5.1" y1="18.9" x2="6.9" y2="17.1"></line><line x1="17.1" y1="6.9" x2="18.9" y2="5.1"></line></g></svg>
         <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg>
       </button>
-    </nav>
+    </div>
   </div>
   <div class="scroll-progress" id="scroll-progress" aria-hidden="true"></div>
 </header>
@@ -109,63 +112,6 @@
   </div>
 </section>
 
-<!-- ================= 3D STAGE ================= -->
-<section class="stage" id="stage">
-  <canvas id="budget-3d"></canvas>
-  <div class="stage-labels" id="stage-labels"></div>
-  <div class="stage-grain" aria-hidden="true"></div>
-
-  <div class="stage-ui">
-    <div class="stage-head">
-      <span class="stage-eyebrow">Interactive&nbsp;3D &middot; WebGL</span>
-      <h2>Your tax dollars, in three dimensions</h2>
-      <p>
-        Each glowing column is one slice of the 2026 municipal budget &mdash;
-        taller and brighter means more money. Light streams from the budget
-        core out to where it&rsquo;s spent. <strong>Drag</strong> to orbit,
-        <strong>scroll</strong> to zoom, and <strong>hover or tap</strong> a
-        column for the details.
-      </p>
-      <div class="stage-toolbar">
-        <div class="stage-modes" id="stage-modes" role="tablist" aria-label="Choose a 3D view">
-          <button type="button" class="stage-mode is-active" data-mode="bars" role="tab" aria-selected="true">Bars</button>
-          <button type="button" class="stage-mode" data-mode="pie" role="tab" aria-selected="false">Pie</button>
-          <button type="button" class="stage-mode" data-mode="revenue" role="tab" aria-selected="false">Revenue</button>
-        </div>
-        <div class="stage-tools" role="group" aria-label="View controls">
-          <button type="button" class="stage-tool" id="stage-tour" aria-label="Play guided tour" title="Guided tour">
-            <svg class="ic-play" viewBox="0 0 24 24" aria-hidden="true"><polygon points="7 5 19 12 7 19"/></svg>
-            <svg class="ic-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-          </button>
-          <button type="button" class="stage-tool" id="stage-rotate" aria-pressed="true" aria-label="Pause auto-rotate" title="Auto-rotate">
-            <svg class="ic-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="5" width="3.4" height="14" rx="1"/><rect x="13.6" y="5" width="3.4" height="14" rx="1"/></svg>
-            <svg class="ic-rotate" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
-          </button>
-          <button type="button" class="stage-tool" id="stage-reset" aria-label="Reset view" title="Reset view">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 9 3 3 9 3"/><polyline points="21 9 21 3 15 3"/><polyline points="3 15 3 21 9 21"/><polyline points="21 15 21 21 15 21"/></svg>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="stage-legend" id="stage-legend"></div>
-
-    <aside class="stage-panel" id="stage-panel" aria-live="polite">
-      <button type="button" class="stage-panel-close" id="stage-panel-close" aria-label="Close details">&times;</button>
-      <div class="stage-panel-body" id="stage-panel-body"></div>
-    </aside>
-  </div>
-
-  <div class="stage-tooltip" id="stage-tooltip"></div>
-
-  <div class="stage-fallback" id="stage-fallback" hidden>
-    <p>
-      Your browser couldn&rsquo;t start the 3D view, but every figure is still
-      below as interactive 2D charts and tables.
-    </p>
-  </div>
-</section>
-
 <!-- ================= AT A GLANCE ================= -->
 <section class="section" id="glance">
   <div class="container">
@@ -179,33 +125,105 @@
       </p>
     </div>
     <div class="stats-grid" id="headline-stats"></div>
+  </div>
+</section>
 
-    <div class="donut-grid">
-      <div class="donut-feature">
-        <h3>Where the money comes from</h3>
-        <div class="donut-feature-wrap">
-          <svg id="revenue-donut" viewBox="0 0 940 640"></svg>
-          <div class="donut-center">
-            <div class="donut-center-value" id="revenue-total">$0</div>
-            <div class="donut-center-label">Total revenue</div>
-          </div>
-        </div>
-        <div class="donut-card-grid" id="revenue-cards"></div>
-      </div>
-      <div class="donut-feature">
-        <h3>Where the money goes</h3>
-        <div class="donut-feature-wrap">
-          <svg id="spending-donut" viewBox="0 0 940 640"></svg>
-          <div class="donut-center">
-            <div class="donut-center-value" id="spending-total">$0</div>
-            <div class="donut-center-label">Total spending</div>
-          </div>
-        </div>
-        <div class="donut-card-grid" id="spending-cards"></div>
-        <div class="donut-other-list" id="spending-other"></div>
+<!-- ================= EXPLORE: 2D / 3D ================= -->
+<section class="section section--alt" id="explore">
+  <div class="container">
+    <div class="section-head explore-head">
+      <span class="eyebrow">Where it goes</span>
+      <h2>Explore where the money comes from &amp; goes</h2>
+      <p class="section-intro">
+        The same 2026 figures, your way &mdash; a clean set of charts, or an
+        interactive 3D view you can orbit and explore. Hover or tap anything
+        for the details behind it.
+      </p>
+      <div class="view-toggle" id="view-toggle" role="tablist" aria-label="Choose 2D or 3D">
+        <button type="button" class="view-opt is-active" data-view="2d" role="tab" aria-selected="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 8 8h-8z"/></svg>
+          2D charts
+        </button>
+        <button type="button" class="view-opt" data-view="3d" role="tab" aria-selected="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 21 7v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>
+          3D view
+        </button>
       </div>
     </div>
-    <p class="donut-hint">Hover or tap a slice &mdash; or a card below &mdash; for details on what it includes.</p>
+  </div>
+
+  <!-- 2D charts -->
+  <div class="viz-2d" id="viz-2d">
+    <div class="container">
+      <div class="donut-grid">
+        <div class="donut-feature">
+          <h3>Where the money comes from</h3>
+          <div class="donut-feature-wrap">
+            <svg id="revenue-donut" viewBox="0 0 940 640"></svg>
+            <div class="donut-center">
+              <div class="donut-center-value" id="revenue-total">$0</div>
+              <div class="donut-center-label">Total revenue</div>
+            </div>
+          </div>
+          <div class="donut-card-grid" id="revenue-cards"></div>
+        </div>
+        <div class="donut-feature">
+          <h3>Where the money goes</h3>
+          <div class="donut-feature-wrap">
+            <svg id="spending-donut" viewBox="0 0 940 640"></svg>
+            <div class="donut-center">
+              <div class="donut-center-value" id="spending-total">$0</div>
+              <div class="donut-center-label">Total spending</div>
+            </div>
+          </div>
+          <div class="donut-card-grid" id="spending-cards"></div>
+          <div class="donut-other-list" id="spending-other"></div>
+        </div>
+      </div>
+      <p class="donut-hint">Hover or tap a slice &mdash; or a card below &mdash; for details on what it includes.</p>
+    </div>
+  </div>
+
+  <!-- 3D view -->
+  <div class="viz-3d" id="viz-3d" hidden>
+    <div class="stage" id="stage">
+      <canvas id="budget-3d"></canvas>
+      <div class="stage-labels" id="stage-labels"></div>
+      <div class="stage-grain" aria-hidden="true"></div>
+
+      <div class="stage-ui">
+        <div class="stage-head">
+          <div class="stage-toolbar">
+            <div class="stage-tools" role="group" aria-label="View controls">
+              <button type="button" class="stage-tool" id="stage-tour" aria-label="Play guided tour" title="Guided tour">
+                <svg class="ic-play" viewBox="0 0 24 24" aria-hidden="true"><polygon points="7 5 19 12 7 19"/></svg>
+                <svg class="ic-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+              </button>
+              <button type="button" class="stage-tool" id="stage-rotate" aria-pressed="true" aria-label="Pause auto-rotate" title="Auto-rotate">
+                <svg class="ic-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="5" width="3.4" height="14" rx="1"/><rect x="13.6" y="5" width="3.4" height="14" rx="1"/></svg>
+                <svg class="ic-rotate" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
+              </button>
+              <button type="button" class="stage-tool" id="stage-reset" aria-label="Reset view" title="Reset view">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 9 3 3 9 3"/><polyline points="21 9 21 3 15 3"/><polyline points="3 15 3 21 9 21"/><polyline points="21 15 21 21 15 21"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stage-legend" id="stage-legend"></div>
+
+        <aside class="stage-panel" id="stage-panel" aria-live="polite">
+          <button type="button" class="stage-panel-close" id="stage-panel-close" aria-label="Close details">&times;</button>
+          <div class="stage-panel-body" id="stage-panel-body"></div>
+        </aside>
+      </div>
+
+      <div class="stage-tooltip" id="stage-tooltip"></div>
+
+      <div class="stage-fallback" id="stage-fallback" hidden>
+        <p>Your browser couldn&rsquo;t start the 3D view &mdash; switch to 2D charts above to see every figure.</p>
+      </div>
+    </div>
   </div>
 </section>
 
