@@ -46,15 +46,30 @@ function renderHeadlineStats(data) {
   const h = data.headline;
   const otherRevenue = h.total_budget.amount - h.municipal_property_tax.amount - h.surplus_used.amount;
 
+  // Year-over-year deltas where we have a genuine 2025 figure.
+  const rev = data.tables.revenues_summary.rows;
+  const rev2025 = (description) => {
+    const row = rev.find((r) => r.description === description);
+    return row ? row.anticipated_2025_usd : null;
+  };
+  const totals = getTotalAppropriationsYoY(data);
+  const delta = (cur, prev) => {
+    if (!prev) return "";
+    const pct = ((cur - prev) / prev) * 100;
+    const up = cur >= prev;
+    return `<span class="stat-delta ${up ? "is-up" : "is-down"}" title="vs. 2025">${up ? "▲" : "▼"} ${Math.abs(pct).toFixed(1)}% <span class="stat-delta-ref">vs 2025</span></span>`;
+  };
+
   const featured = {
     label: "Total 2026 municipal budget",
     value: compactDollars(h.total_budget.amount),
     source: h.total_budget.source,
+    delta: delta(totals.total2026, totals.total2025),
   };
 
   const secondary = [
-    { label: "Paid for by property taxes", value: compactDollars(h.municipal_property_tax.amount), source: h.municipal_property_tax.source },
-    { label: "Surplus (savings) used", value: compactDollars(h.surplus_used.amount), source: h.surplus_used.source, term: "Surplus / Fund Balance" },
+    { label: "Paid for by property taxes", value: compactDollars(h.municipal_property_tax.amount), source: h.municipal_property_tax.source, delta: delta(h.municipal_property_tax.amount, rev2025("Total Amount to be Raised by Taxes for Support of Municipal Budget")) },
+    { label: "Surplus (savings) used", value: compactDollars(h.surplus_used.amount), source: h.surplus_used.source, term: "Surplus / Fund Balance", delta: delta(h.surplus_used.amount, rev2025("Surplus Anticipated")) },
     { label: "Other revenue, fees & aid", value: compactDollars(otherRevenue), source: "Revenues Summary, Sheet 11", term: "Anticipated Revenue" },
     { label: "Spending within the state cap", value: compactDollars(h.appropriations_within_caps.amount), source: h.appropriations_within_caps.source, term: "Within CAPS / Excluded from CAPS" },
     { label: "Spending excluded from the cap", value: compactDollars(h.appropriations_excluded_from_caps.amount), source: h.appropriations_excluded_from_caps.source, term: "Within CAPS / Excluded from CAPS" },
@@ -66,6 +81,7 @@ function renderHeadlineStats(data) {
     <div class="stat-feature">
       <div class="stat-feature-label">${featured.label}</div>
       <div class="stat-feature-value">${featured.value}</div>
+      ${featured.delta ? `<div class="stat-feature-delta">${featured.delta}</div>` : ""}
       <div class="stat-note">Source: ${featured.source}</div>
     </div>
     <div class="stats-grid-secondary">
@@ -75,6 +91,7 @@ function renderHeadlineStats(data) {
         <div class="stat-card">
           <div class="stat-label">${item.label}${glossBadge(item.term)}</div>
           <div class="stat-value">${item.value}</div>
+          ${item.delta ? item.delta : ""}
           <div class="stat-note">Source: ${item.source}</div>
         </div>`
         )
@@ -205,40 +222,34 @@ function renderYoY(data, total) {
       </div>
     </div>`;
 
-  const groups = getSpendingByGroupYoY(data).slice(0, 6);
+  const groups = getSpendingByGroupYoY(data);
+  const maxAbs = Math.max(...groups.map((g) => Math.abs(g.change))) || 1;
   const gridEl = document.getElementById("yoy-grid");
-  gridEl.innerHTML = groups
-    .map((g) => {
-      const up = g.change >= 0;
-      const pct = g.pctChange == null ? "—" : `${up ? "+" : ""}${g.pctChange.toFixed(1)}%`;
-      const max = Math.max(g.amount2025, g.amount2026) || 1;
-      const pct2025 = (g.amount2025 / max) * 100;
-      const pct2026 = (g.amount2026 / max) * 100;
-      return `
-      <div class="yoy-card">
-        <div class="yoy-card-head">
-          <span class="donut-card-swatch" style="background:${g.color}"></span>
-          <span class="yoy-card-label">${g.group}${glossBadge(GROUP_GLOSS_TERM[g.group])}</span>
-          <span class="yoy-card-badge ${up ? "is-up" : "is-down"}">${pct}</span>
-        </div>
-        <div class="yoy-bars yoy-bars--compact">
-          <div class="yoy-bar-row">
-            <span class="yoy-bar-year">2025</span>
-            <div class="yoy-bar-track"><div class="yoy-bar-fill" style="--target:${pct2025}%; background:${g.color}; opacity:.4"></div></div>
-            <span class="yoy-bar-amount">${dollars(g.amount2025, 0)}</span>
+  gridEl.innerHTML = `
+    <div class="diverge-head">
+      <span>Category</span>
+      <span class="diverge-axislabel"><span>&larr; spending less</span><span>spending more &rarr;</span></span>
+      <span class="diverge-change-h">Change</span>
+    </div>
+    ${groups
+      .map((g) => {
+        const up = g.change >= 0;
+        const w = (Math.abs(g.change) / maxAbs) * 47;
+        const pct = g.pctChange == null ? "—" : `${up ? "+" : ""}${g.pctChange.toFixed(1)}%`;
+        return `
+        <div class="diverge-row">
+          <span class="diverge-name">
+            <span class="donut-card-swatch" style="background:${g.color}"></span>
+            <span class="diverge-name-text">${g.group}${glossBadge(GROUP_GLOSS_TERM[g.group])}</span>
+          </span>
+          <div class="diverge-track">
+            <span class="diverge-axis"></span>
+            <span class="diverge-fill ${up ? "is-up" : "is-down"}" style="--w:${w.toFixed(1)}%; ${up ? "left" : "right"}:50%;"></span>
           </div>
-          <div class="yoy-bar-row">
-            <span class="yoy-bar-year">2026</span>
-            <div class="yoy-bar-track"><div class="yoy-bar-fill" style="--target:${pct2026}%; background:${g.color}"></div></div>
-            <span class="yoy-bar-amount">${dollars(g.amount2026, 0)}</span>
-          </div>
-        </div>
-        <div class="yoy-card-change ${up ? "is-up" : "is-down"}">
-          ${up ? "+" : ""}${dollars(g.change, 0)} since 2025
-        </div>
-      </div>`;
-    })
-    .join("");
+          <span class="diverge-delta ${up ? "is-up" : "is-down"}">${up ? "+" : "−"}${compactDollars(Math.abs(g.change))}<span class="diverge-delta-pct">${pct}</span></span>
+        </div>`;
+      })
+      .join("")}`;
 
   // Animate the headline figure once and the comparison bars every time the
   // section scrolls into view (mirrors the donut float-in/out behavior).

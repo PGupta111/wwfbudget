@@ -151,10 +151,47 @@ export function initScrollSpy() {
   sections.forEach((_, section) => observer.observe(section));
 }
 
+/** Collapsible mobile nav (hamburger menu). */
+export function initNav() {
+  const header = document.querySelector(".site-header");
+  const toggle = document.getElementById("nav-toggle");
+  const nav = document.getElementById("site-nav");
+  if (!header || !toggle || !nav) return;
+
+  const close = () => {
+    header.classList.remove("nav-open");
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.setAttribute("aria-label", "Open menu");
+  };
+  const open = () => {
+    header.classList.add("nav-open");
+    toggle.setAttribute("aria-expanded", "true");
+    toggle.setAttribute("aria-label", "Close menu");
+  };
+
+  toggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    header.classList.contains("nav-open") ? close() : open();
+  });
+  nav.addEventListener("click", (e) => {
+    if (e.target.closest("a")) close();
+  });
+  document.addEventListener("click", (e) => {
+    if (header.classList.contains("nav-open") && !header.contains(e.target)) close();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") close();
+  });
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 820) close();
+  });
+}
+
 /** Initialize every shared UI behavior. */
 export function initUI() {
   initTheme();
   initScrollProgress();
   initScrollSpy();
   initReveals();
+  initNav();
 }

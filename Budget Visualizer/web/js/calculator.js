@@ -1,10 +1,14 @@
 // Personal tax estimator + spending breakdown bars (also used as the
 // default, no-input "whole township" view).
-import { dollars, getSpendingByGroup, getRevenueSources } from "./helpers.js";
+import { dollars, compactDollars, getSpendingByGroup, getRevenueSources } from "./helpers.js";
 
 // Most recently published municipal (local-purpose) tax rate per $100 of
 // assessed value, from the 2026 Levy CAP Calculation (Sheet 3-Levy CAP).
 const LOCAL_PURPOSE_TAX_RATE = 0.427;
+
+// Illustrative West Windsor home assessed values for a quick "where do I land"
+// comparison (the estimate is the same published formula applied to each).
+const BENCHMARKS = [350000, 500000, 650000, 800000, 1000000];
 
 export function initCalculator(data) {
   const total = data.headline.total_budget.amount;
@@ -37,6 +41,22 @@ export function initCalculator(data) {
 
   const fillEls = rowsEl.querySelectorAll("[data-fill]");
   const amountEls = rowsEl.querySelectorAll("[data-amount]");
+
+  // Benchmark "typical homes" comparison.
+  const benchRowsEl = document.getElementById("calc-benchmarks-rows");
+  const maxBench = BENCHMARKS[BENCHMARKS.length - 1];
+  if (benchRowsEl) {
+    benchRowsEl.innerHTML = BENCHMARKS.map((v) => {
+      const tax = (v * LOCAL_PURPOSE_TAX_RATE) / 100;
+      return `
+        <div class="bench-row" data-val="${v}">
+          <span class="bench-home">${compactDollars(v)} home</span>
+          <div class="bench-track"><span class="bench-fill" style="width:${((v / maxBench) * 100).toFixed(0)}%"></span></div>
+          <span class="bench-tax">${dollars(tax, 0)}</span>
+        </div>`;
+    }).join("");
+  }
+  const benchRows = benchRowsEl ? [...benchRowsEl.querySelectorAll(".bench-row")] : [];
 
   function render({ animateFills = true } = {}) {
     const raw = input.value.trim();
@@ -85,6 +105,17 @@ export function initCalculator(data) {
       compareFill.classList.remove("has-value");
       compareLabel.textContent =
         "Enter your assessed value to see how your estimated bill compares to the total raised townwide through property taxes.";
+    }
+
+    // Highlight the benchmark closest to the entered value.
+    if (benchRows.length) {
+      let nearest = null;
+      if (hasValue) {
+        nearest = BENCHMARKS.reduce((a, b) =>
+          Math.abs(b - assessedValue) < Math.abs(a - assessedValue) ? b : a
+        );
+      }
+      benchRows.forEach((r) => r.classList.toggle("is-active", hasValue && Number(r.dataset.val) === nearest));
     }
   }
 
