@@ -3809,3 +3809,119 @@ h1 { font-size: clamp(2.4rem, 5.2vw, 4rem); }
 .viz-2d[hidden], .viz-flow[hidden], .viz-3d[hidden] { display: none; }
 .viz-flow-intro { max-width: 72ch; margin: 0 0 1rem; }
 .viz-flow .sankey-card--full { margin-top: 0.25rem; }
+
+/* ============================================================
+   HEADER POLISH + RANKED BARS + SPACING (premium pass)
+   ============================================================ */
+
+/* ---- Premium sticky header with a refined scrolled state ---- */
+.site-header {
+  transition: background 250ms ease, box-shadow 250ms ease, border-color 250ms ease;
+}
+.site-header .container { transition: padding 250ms ease; }
+[data-theme="light"] .site-header { background: rgba(255, 255, 255, 0.72); }
+[data-theme="dark"] .site-header { background: rgba(10, 19, 34, 0.72); }
+.site-header.is-scrolled { box-shadow: 0 8px 30px rgba(12, 74, 110, 0.1); }
+[data-theme="light"] .site-header.is-scrolled { background: rgba(255, 255, 255, 0.94); }
+[data-theme="dark"] .site-header.is-scrolled { background: rgba(10, 19, 34, 0.94); }
+.site-header.is-scrolled .container { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+
+.brand-text strong { letter-spacing: -0.01em; }
+
+/* Animated underline for nav links (replaces the old offset underline) */
+.site-nav a:not(.nav-cta) { padding: 0.25rem 0; }
+.site-nav a:not(.nav-cta)::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -5px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--brand-500);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 200ms ease;
+}
+.site-nav a:not(.nav-cta):hover::after,
+.site-nav a:not(.nav-cta).is-active::after { transform: scaleX(1); }
+
+.header-actions .nav-cta {
+  box-shadow: 0 6px 16px rgba(3, 105, 161, 0.22);
+}
+
+/* ---- Ranked horizontal bar chart (Largest spending) ---- */
+.rankbars {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(12, 74, 110, 0.05), 0 14px 32px rgba(12, 74, 110, 0.08);
+  padding: 0.4rem 1.4rem;
+}
+[data-theme="dark"] .rankbars { box-shadow: 0 14px 32px rgba(0, 0, 0, 0.3); }
+
+.rankbar {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(150px, 22%) 1fr auto;
+  align-items: center;
+  gap: 1.1rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--panel-border);
+}
+.rankbar:last-child { border-bottom: none; }
+.rankbar-rank {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink-faint);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.rankbar-id { display: flex; flex-direction: column; min-width: 0; gap: 0.1rem; }
+.rankbar-name {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rankbar-group { font-size: 0.74rem; color: var(--ink-soft); display: inline-flex; align-items: center; }
+.rankbar-track { height: 13px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.rankbar-fill {
+  display: block;
+  height: 100%;
+  min-width: 4px;
+  border-radius: 999px;
+}
+.rankbar-val {
+  text-align: right;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.rankbar-pct { font-size: 0.72rem; font-weight: 500; color: var(--ink-faint); }
+
+@media (max-width: 680px) {
+  .rankbar {
+    grid-template-columns: 1.4rem 1fr auto;
+    grid-template-areas: "rank id val" "rank track track";
+    gap: 0.3rem 0.8rem;
+    row-gap: 0.45rem;
+  }
+  .rankbar-rank { grid-area: rank; align-self: start; padding-top: 0.15rem; }
+  .rankbar-id { grid-area: id; }
+  .rankbar-val { grid-area: val; }
+  .rankbar-track { grid-area: track; }
+  .rankbar-name { white-space: normal; }
+}
+
+/* ---- Spacing: consistent, less vertical dead-space ---- */
+.section { padding: clamp(2rem, 3.6vw, 3.25rem) 0; }
+.section-head { margin-bottom: 1.75rem; }
+.yoy-grid { margin-top: 1rem; }
+.caps-grid { gap: 1.1rem; }

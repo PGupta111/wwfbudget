@@ -46,6 +46,7 @@ export function initReveals() {
     ".yoy-grid",
     ".caps-grid",
     ".calculator-grid",
+    ".rankbars",
     ".table-wrap",
     ".faq-facts",
     ".faq-list",
@@ -94,16 +95,20 @@ export function initReveals() {
 /** Thin gradient bar under the header that fills as the page is scrolled. */
 export function initScrollProgress() {
   const bar = document.getElementById("scroll-progress");
-  if (!bar) return;
+  const header = document.querySelector(".site-header");
 
   let ticking = false;
   const update = () => {
     const doc = document.documentElement;
-    const max = doc.scrollHeight - doc.clientHeight;
-    const pct = max > 0 ? (window.scrollY || doc.scrollTop) / max : 0;
-    bar.style.transform = `scaleX(${Math.min(1, Math.max(0, pct))})`;
+    const y = window.scrollY || doc.scrollTop;
+    if (bar) {
+      const max = doc.scrollHeight - doc.clientHeight;
+      bar.style.transform = `scaleX(${max > 0 ? Math.min(1, Math.max(0, y / max)) : 0})`;
+    }
+    if (header) header.classList.toggle("is-scrolled", y > 8);
     ticking = false;
   };
+  if (!bar && !header) return;
 
   window.addEventListener(
     "scroll",
