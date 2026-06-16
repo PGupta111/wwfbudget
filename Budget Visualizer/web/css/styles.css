@@ -1417,7 +1417,11 @@ a { color: var(--brand-700); }
 }
 
 .breakdown-row {
-  margin-bottom: 0.85rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+  transition: border-color 160ms ease, background-color 160ms ease;
 }
 
 .breakdown-row:last-child {
@@ -4910,10 +4914,7 @@ h1 { font-size: clamp(2.4rem, 5.2vw, 4rem); }
 .breakdown-row[open] .breakdown-chevron { transform: rotate(90deg); }
 .breakdown-row[open] {
   background: var(--paper);
-  border-radius: 10px;
-  padding: 0.55rem 0.7rem;
-  margin-left: -0.7rem;
-  margin-right: -0.7rem;
+  border-color: var(--brand-300);
 }
 [data-theme="dark"] .breakdown-row[open] { background: rgba(255, 255, 255, 0.04); }
 
