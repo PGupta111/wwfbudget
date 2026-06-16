@@ -4582,6 +4582,12 @@ h1 { font-size: clamp(2.4rem, 5.2vw, 4rem); }
   background: var(--glass-bg, #fff);
   color: var(--ink);
   cursor: pointer;
+  /* Never let a long option (e.g. a department name) blow out the width */
+  max-width: 100%;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 .data-toolbar .checkbox {
   display: flex;
@@ -4652,8 +4658,14 @@ h1 { font-size: clamp(2.4rem, 5.2vw, 4rem); }
 .table-empty { text-align: center; color: var(--ink-faint); padding: 1.5rem 0.8rem !important; font-style: italic; }
 
 @media (max-width: 560px) {
-  .btn-export { margin-left: 0; width: 100%; justify-content: center; }
-  .data-toolbar select { flex: 1; }
+  /* Stack the toolbar so each control fits the width instead of overflowing */
+  .data-toolbar { gap: 0.5rem; }
+  .data-toolbar-search,
+  .data-toolbar select,
+  .pill-toggle,
+  .btn-export { flex: 1 1 100%; width: 100%; }
+  .data-toolbar .checkbox { flex: 1 1 100%; }
+  .btn-export { margin-left: 0; justify-content: center; }
 }
 
 /* ---- Data-page tables: fit the width, wrap text, minimal horizontal scroll --- */
@@ -4838,21 +4850,29 @@ h1 { font-size: clamp(2.4rem, 5.2vw, 4rem); }
   #capital .cap-bar { min-width: 130px; }
 }
 
-/* Diverging "what changed" chart: keep the left/right effect legible on phones */
+/* "What changed" — revised mobile format. The center-diverging bar needs
+   width to read, so on phones we switch to a clean left-anchored magnitude
+   bar; direction is shown by color (blue = more, teal = less) and the ▲/▼
+   in the delta. The name + delta sit on one line, the bar spans below. */
 @media (max-width: 620px) {
-  /* Restore a slim directional cue (the full header is hidden on mobile) */
-  .yoy-grid .diverge-head {
-    display: block;
-    padding: 0 0 0.55rem;
-    border-bottom: 1px solid var(--panel-border);
+  .yoy-grid { padding: 0.25rem 1rem 0.6rem; }
+  .yoy-grid .diverge-head { display: none; }
+  .diverge-row { padding: 0.7rem 0; }
+  .diverge-name { font-size: 0.86rem; }
+  .diverge-delta { font-size: 0.9rem; }
+  .diverge-track {
+    height: 12px;
+    border-radius: 999px;
+    background: var(--line);
+    overflow: hidden;
   }
-  .yoy-grid .diverge-head > span:not(.diverge-axislabel) { display: none; }
-  .yoy-grid .diverge-axislabel {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.66rem;
+  .diverge-axis { display: none; }
+  .diverge-fill {
+    top: 0;
+    bottom: 0;
+    left: 0 !important;
+    right: auto !important;
+    border-radius: 999px;
   }
-  .diverge-track { height: 24px; }
-  .diverge-axis { background: var(--ink-soft); opacity: 0.4; width: 2px; }
-  .diverge-fill { top: 4px; bottom: 4px; }
+  #changed.is-visible .diverge-fill { width: var(--wfull); }
 }

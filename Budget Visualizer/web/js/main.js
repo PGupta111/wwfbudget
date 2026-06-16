@@ -247,6 +247,7 @@ function renderYoY(data, total) {
       .map((g) => {
         const up = g.change >= 0;
         const w = (Math.abs(g.change) / maxAbs) * 47;
+        const wFull = (Math.abs(g.change) / maxAbs) * 100; // left-anchored bar for mobile
         const pct = g.pctChange == null ? "—" : `${up ? "+" : ""}${g.pctChange.toFixed(1)}%`;
         return `
         <div class="diverge-row">
@@ -256,7 +257,7 @@ function renderYoY(data, total) {
           </span>
           <div class="diverge-track">
             <span class="diverge-axis"></span>
-            <span class="diverge-fill ${up ? "is-up" : "is-down"}" style="--w:${w.toFixed(1)}%; ${up ? "left" : "right"}:50%;"></span>
+            <span class="diverge-fill ${up ? "is-up" : "is-down"}" style="--w:${w.toFixed(1)}%; --wfull:${wFull.toFixed(1)}%; ${up ? "left" : "right"}:50%;"></span>
           </div>
           <span class="diverge-delta ${up ? "is-up" : "is-down"}">${up ? "+" : "−"}${compactDollars(Math.abs(g.change))}<span class="diverge-delta-pct">${pct}</span></span>
         </div>`;
@@ -654,11 +655,14 @@ function setupExplore(data) {
 
   opts.forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
 
-  let saved = "flow";
+  // Honor a saved choice; otherwise Flow on desktop, Charts on mobile (the
+  // donuts read far better than a shrunk Sankey on a phone).
+  let saved = null;
   try {
-    saved = localStorage.getItem("wwf-view") || "flow";
+    saved = localStorage.getItem("wwf-view");
   } catch (e) {}
-  setView(saved);
+  const isMobile = window.matchMedia("(max-width: 760px)").matches;
+  setView(saved || (isMobile ? "2d" : "flow"));
 }
 
 async function init() {
