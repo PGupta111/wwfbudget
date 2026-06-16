@@ -4867,9 +4867,10 @@ h1 { font-size: clamp(2.4rem, 5.2vw, 4rem); }
    bar; direction is shown by color (blue = more, amber = less) and the ▲/▼
    in the delta. The name + delta sit on one line, the bar spans below. */
 @media (max-width: 620px) {
-  .yoy-grid { padding: 0.25rem 1rem 0.6rem; }
+  /* Stack as a flex column so decreases can be pushed below the increases */
+  .yoy-grid { display: flex; flex-direction: column; padding: 0.25rem 1rem 0.6rem; }
   .yoy-grid .diverge-head { display: none; }
-  .diverge-row.is-down { padding-left: 0.5rem; padding-right: 0.5rem; }
+  .diverge-row.is-down { order: 1; padding-left: 0.5rem; padding-right: 0.5rem; border-bottom: none; }
   .diverge-row { padding: 0.7rem 0; }
   .diverge-name { font-size: 0.86rem; }
   .diverge-delta { font-size: 0.9rem; }
