@@ -195,30 +195,42 @@ function renderSpendingCards(items, total, getDonut) {
 function renderYoY(data, total) {
   const overall = getTotalAppropriationsYoY(data);
   const totalUp = overall.change >= 0;
-  const totalPct2025 = (overall.total2025 / overall.total2026) * 100;
+
+  // Single growth bar: the smaller year is the "base" segment and the
+  // difference is the highlighted "change" segment, both measured against
+  // the larger year (= 100%). It reads as "this slice is what moved."
+  const maxYear = Math.max(overall.total2025, overall.total2026);
+  const baseVal = Math.min(overall.total2025, overall.total2026);
+  const basePct = (baseVal / maxYear) * 100;
+  const changePct = (Math.abs(overall.change) / maxYear) * 100;
+  const dir = totalUp ? "is-up" : "is-down";
+  const arrow = totalUp ? "▲" : "▼";
 
   const totalEl = document.getElementById("yoy-total");
   totalEl.innerHTML = `
     <div class="yoy-total-card">
-      <div class="yoy-total-label">Total municipal appropriations, 2026</div>
-      <div class="yoy-total-figure">
-        <span class="yoy-total-amount" id="yoy-total-amount">$0</span>
-        <span class="yoy-total-badge ${totalUp ? "is-up" : "is-down"}">${totalUp ? "+" : ""}${overall.pctChange.toFixed(1)}% vs. 2025</span>
+      <span class="yoy-total-label">Total municipal appropriations</span>
+      <div class="yoy-headline">
+        <span class="yoy-headline-amount" id="yoy-total-amount">$0</span>
+        <span class="yoy-headline-year">in 2026</span>
+        <span class="yoy-chip ${dir}">${arrow} ${totalUp ? "+" : "−"}${Math.abs(overall.pctChange).toFixed(1)}% vs. 2025</span>
       </div>
-      <div class="yoy-bars">
-        <div class="yoy-bar-row">
-          <span class="yoy-bar-year">2025</span>
-          <div class="yoy-bar-track"><div class="yoy-bar-fill" style="--target:${totalPct2025}%"></div></div>
-          <span class="yoy-bar-amount">${dollars(overall.total2025, 0)}</span>
+      <div class="yoy-growth">
+        <div class="yoy-growth-track" role="img"
+             aria-label="2025 total ${dollars(overall.total2025, 0)}, 2026 total ${dollars(overall.total2026, 0)}, a ${totalUp ? "rise" : "drop"} of ${dollars(Math.abs(overall.change), 0)}.">
+          <span class="yoy-growth-base" style="--w:${basePct.toFixed(1)}%"></span>
+          <span class="yoy-growth-add ${dir}" style="--w:${changePct.toFixed(1)}%"></span>
         </div>
-        <div class="yoy-bar-row">
-          <span class="yoy-bar-year">2026</span>
-          <div class="yoy-bar-track"><div class="yoy-bar-fill yoy-bar-fill--now" style="--target:100%"></div></div>
-          <span class="yoy-bar-amount">${dollars(overall.total2026, 0)}</span>
+        <div class="yoy-growth-key">
+          <span class="yoy-growth-keyitem">
+            <i class="yoy-growth-dot yoy-growth-dot--base"></i>
+            2025 base &middot; ${compactDollars(baseVal)}
+          </span>
+          <span class="yoy-growth-keyitem">
+            <i class="yoy-growth-dot yoy-growth-dot--change ${dir}"></i>
+            ${totalUp ? "+" : "−"}${compactDollars(Math.abs(overall.change))} ${totalUp ? "added in" : "cut in"} 2026
+          </span>
         </div>
-      </div>
-      <div class="yoy-total-change ${totalUp ? "is-up" : "is-down"}">
-        ${totalUp ? "+" : ""}${dollars(overall.change, 0)} more than 2025
       </div>
     </div>`;
 
