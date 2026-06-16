@@ -4457,12 +4457,17 @@ h1 { font-size: clamp(2.4rem, 5.2vw, 4rem); }
   border-radius: 18px;
   box-shadow: 0 24px 60px rgba(8, 47, 73, 0.32);
   overflow: hidden;
-  transform: translateY(14px) scale(0.98);
-  opacity: 0;
   transform-origin: bottom right;
-  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), opacity 220ms ease;
 }
-.wwf-chat.is-open .wwf-chat-panel { transform: none; opacity: 1; }
+/* Visibility is controlled solely by the [hidden] attribute; the is-open class
+   only adds a subtle entrance animation so the panel can never get stuck
+   open-but-invisible. */
+.wwf-chat-panel[hidden] { display: none; }
+.wwf-chat.is-open .wwf-chat-panel { animation: wwf-chat-pop 220ms cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes wwf-chat-pop {
+  from { transform: translateY(14px) scale(0.98); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
 
 .wwf-chat-head {
   display: flex;
@@ -4647,3 +4652,34 @@ h1 { font-size: clamp(2.4rem, 5.2vw, 4rem); }
   .btn-export { margin-left: 0; width: 100%; justify-content: center; }
   .data-toolbar select { flex: 1; }
 }
+
+/* ---- Data-page tables: fit the width, wrap text, minimal horizontal scroll --- */
+#explorer table,
+#capital table {
+  white-space: normal;
+  font-size: 0.82rem;
+  table-layout: auto;
+}
+#explorer thead th,
+#capital thead th {
+  white-space: normal;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.66rem;
+  vertical-align: bottom;
+  line-height: 1.2;
+}
+#explorer tbody td,
+#capital tbody td {
+  padding: 0.5rem 0.6rem;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+/* Numbers and badges should never wrap awkwardly */
+#explorer td.num,
+#explorer th.num,
+#capital td.num,
+#capital th.num { white-space: nowrap; }
+#explorer .badge { white-space: nowrap; }
+/* Keep the two free-text columns from hogging width */
+#explorer tbody td:first-child,
+#explorer tbody td:nth-child(2) { min-width: 7rem; }

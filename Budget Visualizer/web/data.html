@@ -123,11 +123,10 @@
           <tr>
             <th>Department / Division</th>
             <th>Account / Program</th>
-            <th>Type<span class="gloss-term gloss-btn" data-term="Appropriation" tabindex="0">?</span></th>
             <th>FCOA<span class="gloss-term gloss-btn" data-term="FCOA" tabindex="0">?</span></th>
-            <th>CAPS Status<span class="gloss-term gloss-btn" data-term="Within CAPS / Excluded from CAPS" tabindex="0">?</span></th>
-            <th class="num">2026 Amount</th>
-            <th class="num">2025 Amount</th>
+            <th>CAPS<span class="gloss-term gloss-btn" data-term="Within CAPS / Excluded from CAPS" tabindex="0">?</span></th>
+            <th class="num">2026</th>
+            <th class="num">2025</th>
             <th class="num">Change</th>
             <th>Source</th>
           </tr>
@@ -156,6 +155,10 @@
     </div>
 
     <div class="data-toolbar">
+      <div class="data-toolbar-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+        <input type="search" id="capital-search" placeholder="Search project or department&hellip;" aria-label="Search capital projects" />
+      </div>
       <select id="capital-dept" aria-label="Filter by department or category">
         <option value="">All departments / categories</option>
       </select>

@@ -152,27 +152,25 @@ async function send(text) {
 
 function openPanel() {
   state.open = true;
+  // Make it visible immediately and unconditionally — the `is-open` class only
+  // drives the entrance animation, it must never gate whether the panel shows.
   els.panel.hidden = false;
+  els.root.classList.add("is-open");
   els.launcher.setAttribute("aria-expanded", "true");
-  requestAnimationFrame(() => {
-    els.root.classList.add("is-open");
-    els.input.focus();
-  });
   if (!els.log.dataset.greeted) {
     addBubble("assistant", renderMarkdown(WELCOME));
     renderSuggestions();
     els.log.dataset.greeted = "1";
   }
+  requestAnimationFrame(() => els.input.focus());
 }
 
 function closePanel() {
   state.open = false;
   els.root.classList.remove("is-open");
+  els.panel.hidden = true;
   els.launcher.setAttribute("aria-expanded", "false");
   els.launcher.focus();
-  setTimeout(() => {
-    if (!state.open) els.panel.hidden = true;
-  }, 220);
 }
 
 function autoGrow() {
@@ -255,4 +253,13 @@ function build() {
   });
 }
 
-build();
+function boot() {
+  try {
+    build();
+  } catch (err) {
+    console.error("Budget chat failed to initialize:", err);
+  }
+}
+
+if (document.body) boot();
+else document.addEventListener("DOMContentLoaded", boot);

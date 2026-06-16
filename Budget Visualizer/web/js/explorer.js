@@ -171,9 +171,9 @@ export function initExplorer(data) {
       const groupTotal = groupRows
         .filter(isLineItem)
         .reduce((acc, r) => acc + (r.appropriated_2026_usd || 0), 0);
-      html += `<tr class="group-header-row"><td colspan="8">${group}</td><td class="num">${compactDollars(
+      html += `<tr class="group-header-row"><td colspan="4">${group}</td><td class="num">${compactDollars(
         groupTotal
-      )}</td></tr>`;
+      )}</td><td colspan="3"></td></tr>`;
       for (const row of groupRows) {
         const isTotal = row.type === "Total" || row.type === "Grand Total";
         const capsBadge =
@@ -186,7 +186,6 @@ export function initExplorer(data) {
           <tr class="${isTotal ? "row-total" : ""}">
             <td>${row.department_division_as_printed || "—"}</td>
             <td>${row.account_program || "—"}</td>
-            <td>${row.type || "—"}</td>
             <td>${row.fcoa || "—"}</td>
             <td>${capsBadge}</td>
             <td class="num">${cell(row.appropriated_2026_usd, true)}</td>
@@ -196,7 +195,7 @@ export function initExplorer(data) {
           </tr>`;
       }
     }
-    body.innerHTML = html || `<tr><td colspan="9" class="table-empty">No rows match those filters.</td></tr>`;
+    body.innerHTML = html || `<tr><td colspan="8" class="table-empty">No rows match those filters.</td></tr>`;
   }
 
   function exportCsv() {
@@ -253,6 +252,7 @@ const CAPITAL_VIEWS = {
 };
 
 export function initCapital(data) {
+  const search = document.getElementById("capital-search");
   const deptSelect = document.getElementById("capital-dept");
   const toggle = document.getElementById("capital-view-toggle");
   const exportBtn = document.getElementById("capital-export");
@@ -276,9 +276,18 @@ export function initCapital(data) {
     const table = data.tables[CAPITAL_VIEWS[currentView]];
     const columns = table.columns.filter((c) => c.key !== "notes");
     const deptFilter = deptSelect.value;
+    const term = (search?.value || "").trim().toLowerCase();
     const realRows = table.rows.filter((row) => row.project_no !== null);
     const filtered = realRows
       .filter((row) => !deptFilter || row.department_category === deptFilter)
+      .filter((row) => {
+        if (!term) return true;
+        return [row.project_title, row.department_category, row.project_no]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(term);
+      })
       .sort((a, b) => (b.estimated_total_cost || 0) - (a.estimated_total_cost || 0));
     return { columns, realRows, filtered };
   }
@@ -333,6 +342,7 @@ export function initCapital(data) {
     downloadCsv(`ww-capital-${currentView === "2026" ? "2026" : "6yr"}.csv`, csv);
   }
 
+  search?.addEventListener("input", render);
   deptSelect.addEventListener("change", render);
   toggle.addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-view]");
