@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Data Tables | 2026 Budget Visualizer | West Windsor Forward</title>
-<meta name="description" content="Searchable line-item tables for West Windsor Township's 2026 adopted municipal budget and capital program." />
+<meta name="description" content="Searchable, sortable line-item tables for West Windsor Township's 2026 adopted municipal budget and capital program." />
 <link rel="icon" href="assets/favicon.ico" />
 <meta name="theme-color" content="#082f49" />
 <meta name="color-scheme" content="light dark" />
@@ -55,31 +55,21 @@
 <section class="hero" id="top">
   <div class="container">
     <span class="eyebrow">Township of West Windsor &middot; Adopted 2026 Municipal Budget</span>
-    <h1>Every line, in detail</h1>
+    <h1>The full budget, <em class="serif-accent">line by line</em>.</h1>
     <p>
-      This page has the full spreadsheet-style tables behind the visuals on
-      the <a href="index.html#top">main Budget Visualizer page</a> &mdash;
-      every appropriation line and every capital project, searchable and
-      filterable. If you're just looking for the big picture, head back to
-      the overview.
+      Every appropriation and every capital project from the adopted 2026
+      budget &mdash; searchable, sortable, and downloadable. Figures are exactly
+      as printed on the township's budget form, with the source sheet on every
+      row. For the big picture, head back to the
+      <a href="index.html#top">visual overview</a>.
     </p>
   </div>
 </section>
 
-<!-- ================= JUMP NAV + YEAR SELECTOR ================= -->
-<section class="section section--tight">
+<!-- ================= AT A GLANCE ================= -->
+<section class="section section--tight" id="glance">
   <div class="container">
-    <div class="jump-nav">
-      <a href="#explorer">Explore Spending</a>
-      <a href="#capital">Capital Projects</a>
-    </div>
-    <div class="filters">
-      <label class="checkbox" for="year-select" style="font-weight:600;">Budget year</label>
-      <select id="year-select">
-        <option value="2026" selected>2026 (adopted)</option>
-      </select>
-      <span class="results-note" style="margin:0;">More years will be added here as past budgets are digitized.</span>
-    </div>
+    <div class="data-stats" id="data-stats"></div>
   </div>
 </section>
 
@@ -87,29 +77,45 @@
 <section class="section section--alt" id="explorer">
   <div class="container">
     <div class="section-head">
-      <span class="eyebrow">For the detail-curious</span>
+      <span class="eyebrow">Operating budget</span>
       <h2>Explore every line of spending</h2>
       <p class="section-intro">
-        Search or filter all 170 lines from the adopted budget's
-        appropriations schedule. Every figure is exactly as printed,
-        including the official subtotal and total lines.
+        Search or filter all 170 appropriation lines. Rows are grouped by
+        functional area; use the sort to reorder within each group. Every
+        figure is exactly as printed, including the official subtotal and
+        total lines.
       </p>
     </div>
-    <div class="filters">
-      <input type="search" id="explorer-search" placeholder="Search department, program, or FCOA code&hellip;" />
-      <select id="explorer-group">
+
+    <div class="data-toolbar">
+      <div class="data-toolbar-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+        <input type="search" id="explorer-search" placeholder="Search department, program, or FCOA code&hellip;" aria-label="Search appropriations" />
+      </div>
+      <select id="explorer-group" aria-label="Filter by functional group">
         <option value="">All functional groups</option>
       </select>
-      <select id="explorer-caps">
+      <select id="explorer-caps" aria-label="Filter by CAPS status">
         <option value="">Within CAPS &amp; Excluded</option>
         <option value="Within CAPS">Within CAPS</option>
         <option value="Excluded from CAPS">Excluded from CAPS</option>
       </select>
+      <select id="explorer-sort" aria-label="Sort rows">
+        <option value="amount-desc">2026 amount: high → low</option>
+        <option value="amount-asc">2026 amount: low → high</option>
+        <option value="change-desc">Biggest change vs 2025</option>
+        <option value="name-asc">Program name: A → Z</option>
+      </select>
       <label class="checkbox">
         <input type="checkbox" id="explorer-show-totals" />
-        Show official subtotal/total rows
+        Show subtotal/total rows
       </label>
+      <button type="button" class="btn-export" id="explorer-export">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
+        Download CSV
+      </button>
     </div>
+
     <p class="results-note" id="explorer-count"></p>
     <div class="table-wrap">
       <table id="explorer-table">
@@ -122,12 +128,14 @@
             <th>CAPS Status<span class="gloss-term gloss-btn" data-term="Within CAPS / Excluded from CAPS" tabindex="0">?</span></th>
             <th class="num">2026 Amount</th>
             <th class="num">2025 Amount</th>
+            <th class="num">Change</th>
             <th>Source</th>
           </tr>
         </thead>
         <tbody id="explorer-body"></tbody>
       </table>
     </div>
+    <p class="source-tag">Source: Appropriations Schedule (Sheets 12&ndash;30), 2025 vs. 2026 columns</p>
   </div>
 </section>
 
@@ -138,25 +146,29 @@
       <span class="eyebrow">Looking ahead</span>
       <h2>Capital projects, 2026&ndash;2031</h2>
       <p class="section-intro">
-        Beyond day-to-day operations, the township also plans bigger
-        one-time projects &mdash; equipment, road work, building
-        improvements, and more &mdash; funded through a mix of cash
+        Beyond day-to-day operations, the township also plans bigger one-time
+        projects &mdash; equipment, road work, building improvements &mdash;
+        funded through a mix of cash
         (<span class="gloss-term gloss-btn" data-term="Capital Improvement Fund" tabindex="0">?</span>),
-        grants, and borrowing. Project titles are the township's own broad
-        categories from the budget form, and a single line often bundles
-        several smaller projects within that department.
+        grants, and borrowing. A single line often bundles several smaller
+        projects within that department.
       </p>
     </div>
 
-    <div class="filters">
-      <select id="capital-dept">
+    <div class="data-toolbar">
+      <select id="capital-dept" aria-label="Filter by department or category">
         <option value="">All departments / categories</option>
       </select>
       <div class="pill-toggle" id="capital-view-toggle">
         <button data-view="2026" class="active">2026 funding</button>
         <button data-view="6yr">6-year forecast</button>
       </div>
+      <button type="button" class="btn-export" id="capital-export">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
+        Download CSV
+      </button>
     </div>
+
     <p class="results-note" id="capital-count"></p>
     <div class="table-wrap">
       <table id="capital-table">
@@ -165,6 +177,18 @@
       </table>
     </div>
     <p class="source-tag">Sources: Capital Budget 2026 (Sheets 40b&ndash;40b1) and 6-Year Capital Program (Sheets 40c&ndash;40c1)</p>
+  </div>
+</section>
+
+<!-- ================= FULL DATASET CALLOUT ================= -->
+<section class="section section--alt" id="raw">
+  <div class="container">
+    <div class="callout">
+      <strong>Want the raw data?</strong> The entire dataset, with notes and
+      source-sheet references for every figure, is published as a single JSON
+      file: <a href="data/budget.json" download>budget.json</a>. It's the same
+      file that powers every chart and table on this site.
+    </div>
   </div>
 </section>
 
@@ -186,5 +210,6 @@
 </footer>
 
 <script src="js/data.js" type="module"></script>
+<script src="js/chat.js" type="module"></script>
 </body>
 </html>

@@ -1,5 +1,6 @@
-// Searchable appropriations explorer + capital projects table
-import { dollars, isLineItem, FUNCTIONAL_GROUPS } from "./helpers.js";
+// Data page — at-a-glance stats, searchable/sortable appropriations explorer,
+// and the capital projects table. All figures come straight from budget.json.
+import { dollars, compactDollars, isLineItem, FUNCTIONAL_GROUPS } from "./helpers.js";
 
 const NON_NUMERIC_KEYS = new Set([
   "department_category",
@@ -15,19 +16,95 @@ function cell(value, isNumeric) {
   return value;
 }
 
+// --------------------------------------------------------------- CSV helper
+
+function toCsv(headers, rows) {
+  const esc = (v) => {
+    if (v === null || v === undefined) return "";
+    const s = String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  return [headers, ...rows].map((r) => r.map(esc).join(",")).join("\r\n");
+}
+
+function downloadCsv(filename, csv) {
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// ---------------------------------------------------------- At-a-glance stats
+
+export function initDataStats(data) {
+  const host = document.getElementById("data-stats");
+  if (!host) return;
+  const h = data.headline;
+  const cards = [
+    { label: "Total 2026 budget", v: h.total_budget },
+    { label: "Raised by property taxes", v: h.municipal_property_tax },
+    { label: "Surplus (savings) used", v: h.surplus_used },
+    { label: "Spending within the state cap", v: h.appropriations_within_caps },
+    { label: "Spending excluded from the cap", v: h.appropriations_excluded_from_caps },
+    { label: "Reserve for uncollected taxes", v: h.reserve_for_uncollected_taxes },
+  ];
+  host.innerHTML = cards
+    .map(
+      (c) => `
+      <div class="stat-card">
+        <div class="stat-label">${c.label}</div>
+        <div class="stat-value">${compactDollars(c.v.amount)}</div>
+        <div class="stat-note">Source: ${c.v.source}</div>
+      </div>`
+    )
+    .join("");
+}
+
 // ---------------------------------------------------------------- Explorer
+
+const SORTERS = {
+  "amount-desc": (a, b) => (b.appropriated_2026_usd || 0) - (a.appropriated_2026_usd || 0),
+  "amount-asc": (a, b) => (a.appropriated_2026_usd || 0) - (b.appropriated_2026_usd || 0),
+  "change-desc": (a, b) =>
+    Math.abs((b.appropriated_2026_usd || 0) - (b.appropriated_2025_usd || 0)) -
+    Math.abs((a.appropriated_2026_usd || 0) - (a.appropriated_2025_usd || 0)),
+  "name-asc": (a, b) =>
+    (a.account_program || a.department_division_as_printed || "").localeCompare(
+      b.account_program || b.department_division_as_printed || ""
+    ),
+};
+
+function changeCell(row) {
+  const a = row.appropriated_2026_usd;
+  const b = row.appropriated_2025_usd;
+  if (a === null || a === undefined || b === null || b === undefined)
+    return '<span class="data-change">—</span>';
+  const d = a - b;
+  if (d === 0) return '<span class="data-change is-flat">$0</span>';
+  const up = d > 0;
+  return `<span class="data-change ${up ? "is-up" : "is-down"}">${up ? "▲" : "▼"} ${dollars(
+    Math.abs(d),
+    0
+  )}</span>`;
+}
 
 export function initExplorer(data) {
   const rows = data.tables.appropriations.rows;
   const search = document.getElementById("explorer-search");
   const groupSelect = document.getElementById("explorer-group");
   const capsSelect = document.getElementById("explorer-caps");
+  const sortSelect = document.getElementById("explorer-sort");
   const showTotals = document.getElementById("explorer-show-totals");
+  const exportBtn = document.getElementById("explorer-export");
   const body = document.getElementById("explorer-body");
   const count = document.getElementById("explorer-count");
 
-  // Populate functional-group filter, ordered by spend (largest first) to
-  // match the chart legend.
+  // Functional-group filter, ordered by spend (largest first) to match the chart.
   const groupOrder = Object.keys(FUNCTIONAL_GROUPS).filter((g) =>
     rows.some((r) => r.functional_group === g)
   );
@@ -53,38 +130,51 @@ export function initExplorer(data) {
     return haystack.includes(term);
   }
 
-  function render() {
+  function getFiltered() {
     const term = search.value.trim().toLowerCase();
     const groupFilter = groupSelect.value;
     const capsFilter = capsSelect.value;
     const includeTotals = showTotals.checked;
-
-    let filtered = rows.filter((row) => {
+    return rows.filter((row) => {
       if (!includeTotals && !isLineItem(row)) return false;
       if (groupFilter && row.functional_group !== groupFilter) return false;
       if (capsFilter && row.caps_status !== capsFilter) return false;
       if (!matchesSearch(row, term)) return false;
       return true;
     });
+  }
 
-    count.textContent = `Showing ${filtered.length.toLocaleString()} of ${rows.length.toLocaleString()} published rows`;
+  function render() {
+    const filtered = getFiltered();
+    const sorter = SORTERS[sortSelect.value] || SORTERS["amount-desc"];
 
-    // Group rows for display, ordered largest-group-first (matching the
-    // chart), each with a sticky header row.
+    // Sum only real line items so the figure reconciles with the charts.
+    const lineTotal = filtered
+      .filter(isLineItem)
+      .reduce((acc, r) => acc + (r.appropriated_2026_usd || 0), 0);
+    count.innerHTML = `Showing <strong>${filtered.length.toLocaleString()}</strong> of ${rows.length.toLocaleString()} published rows &middot; <strong>${compactDollars(
+      lineTotal
+    )}</strong> across the line items shown`;
+
+    // Group rows for display, largest-group-first, sorting within each group.
     const byGroup = new Map();
     for (const row of filtered) {
       if (!byGroup.has(row.functional_group)) byGroup.set(row.functional_group, []);
       byGroup.get(row.functional_group).push(row);
     }
-
     const orderedGroups = groupOrder.filter((g) => byGroup.has(g));
-    // Catch any group not in our known order (shouldn't normally happen).
     for (const g of byGroup.keys()) if (!orderedGroups.includes(g)) orderedGroups.push(g);
 
     let html = "";
     for (const group of orderedGroups) {
-      html += `<tr class="group-header-row"><td colspan="8">${group}</td></tr>`;
-      for (const row of byGroup.get(group)) {
+      const groupRows = byGroup.get(group).slice().sort(sorter);
+      const groupTotal = groupRows
+        .filter(isLineItem)
+        .reduce((acc, r) => acc + (r.appropriated_2026_usd || 0), 0);
+      html += `<tr class="group-header-row"><td colspan="8">${group}</td><td class="num">${compactDollars(
+        groupTotal
+      )}</td></tr>`;
+      for (const row of groupRows) {
         const isTotal = row.type === "Total" || row.type === "Grand Total";
         const capsBadge =
           row.caps_status === "Within CAPS"
@@ -101,17 +191,57 @@ export function initExplorer(data) {
             <td>${capsBadge}</td>
             <td class="num">${cell(row.appropriated_2026_usd, true)}</td>
             <td class="num">${cell(row.appropriated_2025_usd, true)}</td>
+            <td class="num">${changeCell(row)}</td>
             <td>${row.source_sheet || "—"}</td>
           </tr>`;
       }
     }
-    body.innerHTML = html;
+    body.innerHTML = html || `<tr><td colspan="9" class="table-empty">No rows match those filters.</td></tr>`;
+  }
+
+  function exportCsv() {
+    const filtered = getFiltered().slice().sort(SORTERS[sortSelect.value] || SORTERS["amount-desc"]);
+    const headers = [
+      "Functional group",
+      "Department / Division",
+      "Account / Program",
+      "Type",
+      "FCOA",
+      "CAPS status",
+      "2026 amount",
+      "2025 amount",
+      "Change",
+      "Source sheet",
+    ];
+    const csv = toCsv(
+      headers,
+      filtered.map((r) => {
+        const a = r.appropriated_2026_usd;
+        const b = r.appropriated_2025_usd;
+        const change = a !== null && a !== undefined && b !== null && b !== undefined ? a - b : "";
+        return [
+          r.functional_group,
+          r.department_division_as_printed,
+          r.account_program,
+          r.type,
+          r.fcoa,
+          r.caps_status,
+          a ?? "",
+          b ?? "",
+          change,
+          r.source_sheet,
+        ];
+      })
+    );
+    downloadCsv("ww-2026-appropriations.csv", csv);
   }
 
   search.addEventListener("input", render);
   groupSelect.addEventListener("change", render);
   capsSelect.addEventListener("change", render);
+  sortSelect.addEventListener("change", render);
   showTotals.addEventListener("change", render);
+  exportBtn?.addEventListener("click", exportCsv);
   render();
 }
 
@@ -125,6 +255,7 @@ const CAPITAL_VIEWS = {
 export function initCapital(data) {
   const deptSelect = document.getElementById("capital-dept");
   const toggle = document.getElementById("capital-view-toggle");
+  const exportBtn = document.getElementById("capital-export");
   const thead = document.getElementById("capital-thead");
   const body = document.getElementById("capital-body");
   const count = document.getElementById("capital-count");
@@ -141,10 +272,19 @@ export function initCapital(data) {
 
   let currentView = "2026";
 
-  function render() {
+  function getView() {
     const table = data.tables[CAPITAL_VIEWS[currentView]];
     const columns = table.columns.filter((c) => c.key !== "notes");
     const deptFilter = deptSelect.value;
+    const realRows = table.rows.filter((row) => row.project_no !== null);
+    const filtered = realRows
+      .filter((row) => !deptFilter || row.department_category === deptFilter)
+      .sort((a, b) => (b.estimated_total_cost || 0) - (a.estimated_total_cost || 0));
+    return { columns, realRows, filtered };
+  }
+
+  function render() {
+    const { columns, realRows, filtered } = getView();
 
     thead.innerHTML =
       "<tr>" +
@@ -153,11 +293,7 @@ export function initCapital(data) {
         .join("") +
       "</tr>";
 
-    const realRows = table.rows.filter((row) => row.project_no !== null);
-    const filtered = realRows
-      .filter((row) => !deptFilter || row.department_category === deptFilter)
-      .sort((a, b) => (b.estimated_total_cost || 0) - (a.estimated_total_cost || 0));
-    count.textContent = `Showing ${filtered.length.toLocaleString()} of ${realRows.length.toLocaleString()} projects`;
+    count.innerHTML = `Showing <strong>${filtered.length.toLocaleString()}</strong> of ${realRows.length.toLocaleString()} projects`;
 
     let html = "";
     for (const row of filtered) {
@@ -169,7 +305,6 @@ export function initCapital(data) {
       html += "</tr>";
     }
 
-    // Totals row across the filtered projects.
     if (filtered.length) {
       html += '<tr class="row-total">';
       for (const c of columns) {
@@ -181,9 +316,21 @@ export function initCapital(data) {
         html += `<td class="num">${dollars(sum, 2)}</td>`;
       }
       html += "</tr>";
+    } else {
+      html = `<tr><td colspan="${columns.length}" class="table-empty">No projects match that filter.</td></tr>`;
     }
 
     body.innerHTML = html;
+  }
+
+  function exportCsv() {
+    const { columns, filtered } = getView();
+    const headers = columns.map((c) => c.label);
+    const csv = toCsv(
+      headers,
+      filtered.map((row) => columns.map((c) => row[c.key] ?? ""))
+    );
+    downloadCsv(`ww-capital-${currentView === "2026" ? "2026" : "6yr"}.csv`, csv);
   }
 
   deptSelect.addEventListener("change", render);
@@ -194,6 +341,7 @@ export function initCapital(data) {
     toggle.querySelectorAll("button").forEach((b) => b.classList.toggle("active", b === btn));
     render();
   });
+  exportBtn?.addEventListener("click", exportCsv);
 
   render();
 }

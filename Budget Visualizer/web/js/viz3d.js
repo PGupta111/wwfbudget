@@ -135,7 +135,7 @@ export function initBudget3D(data, opts = {}) {
   controls.enableZoom = false; // custom wheel handling below (so the page can scroll at the zoom limits)
   controls.minDistance = 11;
   controls.maxDistance = 46;
-  controls.maxPolarAngle = Math.PI * 0.49;
+  controls.maxPolarAngle = Math.PI * 0.46; // stay off a dead-on horizon to avoid plane shimmer
   controls.autoRotate = !reduceMotion;
   controls.autoRotateSpeed = 0.5;
 
@@ -183,7 +183,16 @@ export function initBudget3D(data, opts = {}) {
 
   const ground = new THREE.Mesh(
     new THREE.CircleGeometry(60, 96),
-    new THREE.MeshStandardMaterial({ color: 0x223d68, roughness: 0.8, metalness: 0.18 })
+    // polygonOffset pushes the ground slightly back in the depth buffer so the
+    // grid lines drawn just above it never z-fight (the flicker at grazing angles).
+    new THREE.MeshStandardMaterial({
+      color: 0x223d68,
+      roughness: 0.8,
+      metalness: 0.18,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1,
+    })
   );
   ground.rotation.x = -Math.PI / 2;
   ground.receiveShadow = true;
@@ -192,7 +201,11 @@ export function initBudget3D(data, opts = {}) {
   const grid = new THREE.PolarGridHelper(20, 16, 8, 96, 0x5a82b8, 0x3a5887);
   grid.material.transparent = true;
   grid.material.opacity = 0.45;
-  grid.position.y = 0.01;
+  // Lift the grid clear of the ground and stop it writing depth, so the two
+  // coplanar surfaces can't fight for the same pixels as the camera orbits.
+  grid.material.depthWrite = false;
+  grid.position.y = 0.06;
+  grid.renderOrder = 1;
   scene.add(grid);
 
   // ---- Content group (mode-specific) ---------------------------------------
@@ -421,7 +434,14 @@ export function initBudget3D(data, opts = {}) {
   }
 
   // ---- Post-processing -----------------------------------------------------
-  const composer = new EffectComposer(renderer);
+  // Render into a multisampled target so edges keep their antialiasing through
+  // the bloom pass (otherwise thin bars/grid lines crawl and shimmer — read as
+  // "flicker" — while the scene auto-rotates). `samples` is a no-op on WebGL1.
+  const composerTarget = new THREE.WebGLRenderTarget(1, 1, {
+    type: THREE.HalfFloatType,
+    samples: 4,
+  });
+  const composer = new EffectComposer(renderer, composerTarget);
   composer.addPass(new RenderPass(scene, camera));
   const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.5, 0.5, 0.85);
   composer.addPass(bloom);

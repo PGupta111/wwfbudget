@@ -1,5 +1,5 @@
-// Data Tables page — Explorer + Capital projects
-import { initExplorer, initCapital } from "./explorer.js";
+// Data Tables page — at-a-glance stats, Explorer + Capital projects
+import { initDataStats, initExplorer, initCapital } from "./explorer.js";
 import { attachGlossaryTooltips } from "./glossary.js";
 import { initUI } from "./ui.js";
 import { loadBudget } from "./helpers.js";
@@ -7,6 +7,7 @@ import { loadBudget } from "./helpers.js";
 async function init() {
   initUI();
   const data = await loadBudget();
+  initDataStats(data);
   initExplorer(data);
   initCapital(data);
   attachGlossaryTooltips(data);
