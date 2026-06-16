@@ -42,9 +42,31 @@ function escapeHtml(s) {
     .replace(/>/g, "&gt;");
 }
 
+/** Defense in depth: if the model ever emits a Markdown/ASCII table despite
+ * the instruction not to, degrade it to readable text instead of broken pipes. */
+function detableify(text) {
+  return text
+    .split("\n")
+    // Drop separator rows like |---|:--:|---|
+    .filter((l) => !(/\|/.test(l) && /^[\s|:.-]+$/.test(l)))
+    // Turn pipe columns into middot-separated text
+    .map((l) =>
+      l.includes("|")
+        ? l
+            .replace(/^\s*\|/, "")
+            .replace(/\|\s*$/, "")
+            .split("|")
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .join(" · ")
+        : l
+    )
+    .join("\n");
+}
+
 /** Tiny, safe markdown: escapes first, then re-adds bold, lists, paragraphs. */
 function renderMarkdown(text) {
-  const esc = escapeHtml(text.trim());
+  const esc = escapeHtml(detableify(text).trim());
   const blocks = esc.split(/\n{2,}/);
   return blocks
     .map((block) => {

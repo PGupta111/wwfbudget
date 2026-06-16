@@ -4683,3 +4683,50 @@ h1 { font-size: clamp(2.4rem, 5.2vw, 4rem); }
 /* Keep the two free-text columns from hogging width */
 #explorer tbody td:first-child,
 #explorer tbody td:nth-child(2) { min-width: 7rem; }
+
+/* ---- Data tables v2: fill the width with intentional column sizing ---- */
+#explorer table.data-table,
+#capital table.data-table { table-layout: fixed; width: 100%; }
+
+/* Appropriations: one wide two-line "Line item" column + tidy rest */
+#explorer .c-item { width: 34%; }
+#explorer .c-fcoa { width: 8%; }
+#explorer .c-caps { width: 11%; }
+#explorer .c-num { width: 12%; }
+#explorer .c-src { width: 11%; }
+
+/* Capital: project / no. / estimated total / wide funding-mix bar */
+#capital th:nth-child(1) { width: 32%; }
+#capital th:nth-child(2) { width: 8%; }
+#capital th:nth-child(3) { width: 18%; }
+#capital th:nth-child(4) { width: 42%; }
+
+/* Two-line primary cell (program/project + muted context) */
+.cell-item strong { display: block; font-weight: 600; color: var(--ink); font-size: 0.84rem; line-height: 1.25; }
+.cell-item .cell-sub { display: block; margin-top: 0.12rem; font-size: 0.72rem; color: var(--ink-faint); line-height: 1.2; }
+.cell-src { font-size: 0.74rem; color: var(--ink-soft); }
+
+/* Funding-mix stacked bar */
+.cap-bar {
+  display: flex;
+  height: 15px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--line);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.cap-bar span { display: block; height: 100%; min-width: 2px; }
+.cap-bar span:hover { filter: brightness(1.08); }
+.cap-bar-empty { color: var(--ink-faint); }
+
+.cap-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.1rem;
+  margin-bottom: 0.8rem;
+  font-size: 0.76rem;
+  color: var(--ink-soft);
+}
+.cap-legend-item { display: inline-flex; align-items: center; gap: 0.4rem; }
+.cap-legend-item i { width: 11px; height: 11px; border-radius: 3px; box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.08); flex: none; }
+[data-theme="dark"] .cap-legend-item i { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.16); }

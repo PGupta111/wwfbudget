@@ -118,11 +118,14 @@
 
     <p class="results-note" id="explorer-count"></p>
     <div class="table-wrap">
-      <table id="explorer-table">
+      <table id="explorer-table" class="data-table">
+        <colgroup>
+          <col class="c-item" /><col class="c-fcoa" /><col class="c-caps" />
+          <col class="c-num" /><col class="c-num" /><col class="c-num" /><col class="c-src" />
+        </colgroup>
         <thead>
           <tr>
-            <th>Department / Division</th>
-            <th>Account / Program</th>
+            <th>Line item</th>
             <th>FCOA<span class="gloss-term gloss-btn" data-term="FCOA" tabindex="0">?</span></th>
             <th>CAPS<span class="gloss-term gloss-btn" data-term="Within CAPS / Excluded from CAPS" tabindex="0">?</span></th>
             <th class="num">2026</th>
@@ -173,8 +176,9 @@
     </div>
 
     <p class="results-note" id="capital-count"></p>
+    <div class="cap-legend" id="capital-legend"></div>
     <div class="table-wrap">
-      <table id="capital-table">
+      <table id="capital-table" class="data-table">
         <thead id="capital-thead"></thead>
         <tbody id="capital-body"></tbody>
       </table>

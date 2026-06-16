@@ -171,7 +171,7 @@ export function initExplorer(data) {
       const groupTotal = groupRows
         .filter(isLineItem)
         .reduce((acc, r) => acc + (r.appropriated_2026_usd || 0), 0);
-      html += `<tr class="group-header-row"><td colspan="4">${group}</td><td class="num">${compactDollars(
+      html += `<tr class="group-header-row"><td colspan="3">${group}</td><td class="num">${compactDollars(
         groupTotal
       )}</td><td colspan="3"></td></tr>`;
       for (const row of groupRows) {
@@ -182,20 +182,26 @@ export function initExplorer(data) {
             : row.caps_status === "Excluded from CAPS"
             ? '<span class="badge badge-excluded">Excluded</span>'
             : "—";
+        // Primary = the specific account/program; the department path is a
+        // muted subtitle, so the line reads in one wide column instead of two.
+        const primary = row.account_program || row.department_division_as_printed || "—";
+        const sub =
+          row.account_program && row.department_division_as_printed
+            ? `<span class="cell-sub">${row.department_division_as_printed}</span>`
+            : "";
         html += `
           <tr class="${isTotal ? "row-total" : ""}">
-            <td>${row.department_division_as_printed || "—"}</td>
-            <td>${row.account_program || "—"}</td>
+            <td class="cell-item"><strong>${primary}</strong>${sub}</td>
             <td>${row.fcoa || "—"}</td>
             <td>${capsBadge}</td>
             <td class="num">${cell(row.appropriated_2026_usd, true)}</td>
             <td class="num">${cell(row.appropriated_2025_usd, true)}</td>
             <td class="num">${changeCell(row)}</td>
-            <td>${row.source_sheet || "—"}</td>
+            <td class="cell-src">${row.source_sheet || "—"}</td>
           </tr>`;
       }
     }
-    body.innerHTML = html || `<tr><td colspan="8" class="table-empty">No rows match those filters.</td></tr>`;
+    body.innerHTML = html || `<tr><td colspan="7" class="table-empty">No rows match those filters.</td></tr>`;
   }
 
   function exportCsv() {
@@ -251,11 +257,50 @@ const CAPITAL_VIEWS = {
   "6yr": "6_year_capital_program",
 };
 
+// Instead of a dozen tiny numeric columns, each project shows ONE wide
+// "funding mix" cell — a stacked bar of these sources, with the exact figures
+// on hover and in the CSV. This uses the horizontal space and ends the scroll.
+const CAPITAL_SOURCES = {
+  "2026": [
+    { key: "2026_budget_appropriations", label: "2026 appropriation", color: "#0ea5e9" },
+    { key: "capital_improvement_fund", label: "Capital Improvement Fund", color: "#22c55e" },
+    { key: "capital_surplus", label: "Capital surplus", color: "#14b8a6" },
+    { key: "grants_in_aid_and_other_funds", label: "Grants & other funds", color: "#a855f7" },
+    { key: "debt_authorized", label: "Debt authorized", color: "#f59e0b" },
+    { key: "to_be_funded_in_future_years", label: "To be funded (future years)", color: "#94a3b8" },
+  ],
+  "6yr": [
+    { key: "fy2026", label: "FY2026", color: "#0c4a6e" },
+    { key: "fy2027", label: "FY2027", color: "#0369a1" },
+    { key: "fy2028", label: "FY2028", color: "#0ea5e9" },
+    { key: "fy2029", label: "FY2029", color: "#22d3ee" },
+    { key: "fy2030", label: "FY2030", color: "#5eead4" },
+    { key: "fy2031", label: "FY2031", color: "#a7f3d0" },
+  ],
+};
+
+function fundingBar(sources, getVal) {
+  const parts = sources
+    .map((s) => ({ ...s, v: Number(getVal(s.key)) || 0 }))
+    .filter((p) => p.v > 0);
+  const total = parts.reduce((a, p) => a + p.v, 0);
+  if (!total) return '<span class="cap-bar-empty">—</span>';
+  const segs = parts
+    .map((p) => {
+      const t = `${p.label}: ${dollars(p.v, 2)}`.replace(/"/g, "&quot;");
+      return `<span style="width:${((p.v / total) * 100).toFixed(2)}%;background:${p.color}" title="${t}"></span>`;
+    })
+    .join("");
+  const full = parts.map((p) => `${p.label}: ${dollars(p.v, 2)}`).join(" · ").replace(/"/g, "&quot;");
+  return `<div class="cap-bar" title="${full}">${segs}</div>`;
+}
+
 export function initCapital(data) {
   const search = document.getElementById("capital-search");
   const deptSelect = document.getElementById("capital-dept");
   const toggle = document.getElementById("capital-view-toggle");
   const exportBtn = document.getElementById("capital-export");
+  const legendEl = document.getElementById("capital-legend");
   const thead = document.getElementById("capital-thead");
   const body = document.getElementById("capital-body");
   const count = document.getElementById("capital-count");
@@ -293,41 +338,58 @@ export function initCapital(data) {
   }
 
   function render() {
-    const { columns, realRows, filtered } = getView();
+    const { realRows, filtered } = getView();
+    const sources = CAPITAL_SOURCES[currentView];
+    const mixLabel = currentView === "2026" ? "How it's funded" : "Spending by fiscal year";
 
-    thead.innerHTML =
-      "<tr>" +
-      columns
-        .map((c) => `<th class="${NON_NUMERIC_KEYS.has(c.key) ? "" : "num"}">${c.label}</th>`)
-        .join("") +
-      "</tr>";
+    if (legendEl) {
+      legendEl.innerHTML = sources
+        .map((s) => `<span class="cap-legend-item"><i style="background:${s.color}"></i>${s.label}</span>`)
+        .join("");
+    }
+
+    thead.innerHTML = `<tr>
+      <th>Project</th>
+      <th>No.</th>
+      <th class="num">Estimated total</th>
+      <th>${mixLabel}</th>
+    </tr>`;
 
     count.innerHTML = `Showing <strong>${filtered.length.toLocaleString()}</strong> of ${realRows.length.toLocaleString()} projects`;
 
-    let html = "";
-    for (const row of filtered) {
-      html += "<tr>";
-      for (const c of columns) {
-        const isNumeric = !NON_NUMERIC_KEYS.has(c.key);
-        html += `<td class="${isNumeric ? "num" : ""}">${cell(row[c.key], isNumeric)}</td>`;
-      }
-      html += "</tr>";
+    if (!filtered.length) {
+      body.innerHTML = `<tr><td colspan="4" class="table-empty">No projects match that filter.</td></tr>`;
+      return;
     }
 
-    if (filtered.length) {
-      html += '<tr class="row-total">';
-      for (const c of columns) {
-        if (NON_NUMERIC_KEYS.has(c.key)) {
-          html += `<td>${c.key === "department_category" ? "Total" : ""}</td>`;
-          continue;
-        }
-        const sum = filtered.reduce((acc, row) => acc + (row[c.key] || 0), 0);
-        html += `<td class="num">${dollars(sum, 2)}</td>`;
-      }
-      html += "</tr>";
-    } else {
-      html = `<tr><td colspan="${columns.length}" class="table-empty">No projects match that filter.</td></tr>`;
+    let html = "";
+    for (const row of filtered) {
+      const dept = row.department_category
+        ? `<span class="cell-sub">${row.department_category}</span>`
+        : "";
+      html += `
+        <tr>
+          <td class="cell-item"><strong>${row.project_title || "—"}</strong>${dept}</td>
+          <td>${row.project_no || "—"}</td>
+          <td class="num">${cell(row.estimated_total_cost, true)}</td>
+          <td>${fundingBar(sources, (k) => row[k])}</td>
+        </tr>`;
     }
+
+    // Totals row, with an aggregate funding-mix bar across the filtered set.
+    const sumEst = filtered.reduce((acc, r) => acc + (r.estimated_total_cost || 0), 0);
+    const sumByKey = {};
+    for (const s of sources)
+      sumByKey[s.key] = filtered.reduce((acc, r) => acc + (Number(r[s.key]) || 0), 0);
+    html += `
+      <tr class="row-total">
+        <td class="cell-item"><strong>Total &middot; ${filtered.length} project${
+      filtered.length === 1 ? "" : "s"
+    }</strong></td>
+        <td>—</td>
+        <td class="num">${dollars(sumEst, 2)}</td>
+        <td>${fundingBar(sources, (k) => sumByKey[k])}</td>
+      </tr>`;
 
     body.innerHTML = html;
   }
