@@ -1,6 +1,6 @@
 // Personal tax estimator + spending breakdown bars (also used as the
 // default, no-input "whole township" view).
-import { dollars, compactDollars, getSpendingByGroup, getRevenueSources } from "./helpers.js";
+import { dollars, compactDollars, getSpendingByGroup, getRevenueSources, getLineItems } from "./helpers.js";
 
 // Most recently published municipal (local-purpose) tax rate per $100 of
 // assessed value, from the 2026 Levy CAP Calculation (Sheet 3-Levy CAP).
@@ -22,21 +22,60 @@ export function initCalculator(data) {
   const compareFill = document.getElementById("compare-fill");
   const compareLabel = document.getElementById("compare-label");
 
+  // Largest line items inside each functional group, so the breakdown can
+  // drill down to "the biggest checks" without a separate section.
+  const linesByGroup = new Map();
+  for (const r of getLineItems(data)) {
+    const amount = r.appropriated_2026_usd || 0;
+    if (amount <= 0) continue;
+    const grp = r.functional_group;
+    if (!linesByGroup.has(grp)) linesByGroup.set(grp, []);
+    linesByGroup.get(grp).push({
+      label: r.account_program || r.department_division_as_printed || "Unlabeled",
+      amount,
+    });
+  }
+  for (const arr of linesByGroup.values()) arr.sort((a, b) => b.amount - a.amount);
+
+  const chevron =
+    '<svg class="breakdown-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
   // Build the row markup once so the fill bars and numbers can transition
   // smoothly between renders instead of being torn down and rebuilt.
   rowsEl.innerHTML = groups
-    .map(
-      (g) => `
-        <div class="breakdown-row" title="${g.blurb}">
-          <div class="breakdown-row-head">
-            <span class="group-name">${g.group}</span>
-            <span class="group-amounts" data-amount></span>
-          </div>
-          <div class="breakdown-track">
-            <div class="breakdown-fill" data-fill style="background:${g.color};"></div>
-          </div>
-        </div>`
-    )
+    .map((g) => {
+      const all = linesByGroup.get(g.group) || [];
+      const top = all.slice(0, 5);
+      const more = all.length - top.length;
+      const lines = top
+        .map((l) => {
+          const pctOfGroup = g.amount ? ((l.amount / g.amount) * 100).toFixed(1) : "0.0";
+          return `<li><span class="bl-name">${l.label}</span><span class="bl-amt">${dollars(
+            l.amount,
+            0
+          )} &middot; ${pctOfGroup}%</span></li>`;
+        })
+        .join("");
+      const moreRow =
+        more > 0
+          ? `<li class="bl-more"><a href="data.html#explorer">+${more} smaller line${
+              more === 1 ? "" : "s"
+            } &mdash; see all in the data tables &rarr;</a></li>`
+          : "";
+      return `
+        <details class="breakdown-row" title="${g.blurb}">
+          <summary>
+            <div class="breakdown-row-head">
+              <span class="group-name">${chevron}${g.group}</span>
+              <span class="group-amounts" data-amount></span>
+            </div>
+            <div class="breakdown-track">
+              <div class="breakdown-fill" data-fill style="background:${g.color};"></div>
+            </div>
+          </summary>
+          <ul class="breakdown-lines">${lines}${moreRow}</ul>
+        </details>`;
+    })
     .join("");
 
   const fillEls = rowsEl.querySelectorAll("[data-fill]");

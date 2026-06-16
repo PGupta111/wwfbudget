@@ -15,7 +15,6 @@ import {
   getRevenueSources,
   getTotalAppropriationsYoY,
   getSpendingByGroupYoY,
-  getLargestSpendingLines,
   loadBudget,
 } from "./helpers.js";
 
@@ -312,31 +311,6 @@ function renderYoY(data, total) {
 
 /** Largest individual 2026 appropriation line items, as a ranked horizontal
  * bar chart (clearer and more space-efficient than a wide table). */
-function renderLargestSpending(data, total) {
-  const lines = getLargestSpendingLines(data, 10);
-  const colorByGroup = new Map(getSpendingByGroup(data).map((g) => [g.group, g.color]));
-  const max = Math.max(...lines.map((l) => l.amount)) || 1;
-  const el = document.getElementById("largest-bars");
-  if (!el) return;
-  el.innerHTML = lines
-    .map((line, i) => {
-      const pct = ((line.amount / total) * 100).toFixed(1);
-      const width = ((line.amount / max) * 100).toFixed(1);
-      const color = colorByGroup.get(line.group) || "var(--grp-13)";
-      return `
-      <div class="rankbar">
-        <div class="rankbar-rank">${i + 1}</div>
-        <div class="rankbar-id">
-          <span class="rankbar-name">${line.label}</span>
-          <span class="rankbar-group">${line.group}${glossBadge(GROUP_GLOSS_TERM[line.group])}</span>
-        </div>
-        <div class="rankbar-track"><span class="rankbar-fill" style="width:${width}%;background:${color}"></span></div>
-        <div class="rankbar-val">${dollars(line.amount, 0)}<span class="rankbar-pct">${pct}% of budget</span></div>
-      </div>`;
-    })
-    .join("");
-}
-
 function renderCaps(data) {
   const h = data.headline;
   const appropMax = h.appropriations_within_caps.amount + Math.abs(h.appropriation_cap_under.amount);
@@ -693,7 +667,6 @@ async function init() {
     onSliceActivate: (idx) => spendingCards.forEach((c, i) => c.classList.toggle("is-highlighted", i === idx)),
   });
   renderYoY(data, total);
-  renderLargestSpending(data, total);
   initCalculator(data);
   attachGlossaryTooltips(data);
   setupExplore(data);
