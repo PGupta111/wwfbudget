@@ -4098,3 +4098,138 @@ h1 { font-size: clamp(2.4rem, 5.2vw, 4rem); }
 @media (max-width: 540px) {
   .brand-text { display: none; }
 }
+
+/* ============================================================
+   PREMIUM POLISH PASS
+   Legend "key" chips · YoY comparison · callout spacing · header
+   ============================================================ */
+
+/* ---- 1. Chart legend / key → premium pill chips ---------------- */
+.legend {
+  justify-content: center;
+  gap: 0.55rem 0.6rem;
+  margin-top: 1.4rem;
+  font-size: 0.78rem;
+}
+.legend-item {
+  gap: 0.55rem;
+  padding: 0.42rem 0.9rem 0.42rem 0.65rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  box-shadow: 0 1px 2px rgba(12, 74, 110, 0.06);
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 220ms ease, color 220ms ease, box-shadow 220ms ease;
+}
+.legend-item:hover {
+  transform: translateY(-1px);
+  color: var(--ink);
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 7px 18px rgba(12, 74, 110, 0.13);
+}
+.legend-swatch {
+  width: 0.82rem;
+  height: 0.82rem;
+  border-radius: 0.28rem;
+  /* A surface-matched ring frames each swatch — the hallmark of a
+     polished categorical legend. */
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.6), 0 1px 2px rgba(8, 47, 73, 0.25);
+}
+[data-theme="dark"] .legend-swatch {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.07), 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+[data-theme="dark"] .legend-item:hover {
+  box-shadow: 0 7px 18px rgba(0, 0, 0, 0.32);
+}
+
+/* ---- 2. "What changed from 2025?" → cleaner comparison band ---- */
+.yoy-total-card {
+  padding: 1.85rem 1.9rem 1.6rem;
+  box-shadow: 0 18px 48px rgba(3, 105, 161, 0.32);
+}
+/* Hairline sheen along the top edge, matching the other premium cards. */
+.yoy-total-card::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  pointer-events: none;
+}
+.yoy-total-figure { margin: 0.55rem 0 1.4rem; }
+/* The 2026 (current-year) bar reads as the "live" value with a soft glow. */
+.yoy-bar-fill--now {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.8), #fff);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.45);
+}
+/* Lift the standout total bar row slightly so the eye lands on 2026. */
+.yoy-bar-row:last-child .yoy-bar-year,
+.yoy-bar-row:last-child .yoy-bar-amount { opacity: 1; font-weight: 700; }
+.yoy-total-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 1.2rem;
+  padding: 0.4rem 0.95rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 0.9rem;
+}
+
+/* ---- 3. Pull the "full spreadsheet" callout up under its source --- */
+/* The source chip closing #largest and this callout are two stacked
+   sections; collapse the dead space so they read as one thought. */
+#largest { padding-bottom: clamp(1.25rem, 2.5vw, 1.75rem); }
+#data-tables-link { padding-top: clamp(0.75rem, 1.5vw, 1rem); }
+
+/* ---- 4. Header: continued premium refinements ------------------ */
+/* Richer brand accent rule. */
+.top-bar {
+  height: 5px;
+  background: linear-gradient(90deg, var(--brand-900), var(--brand-700) 45%, var(--brand-500));
+}
+/* Logo gets a subtle framed, elevated treatment. */
+.brand img {
+  border-radius: 9px;
+  box-shadow: 0 2px 8px rgba(8, 47, 73, 0.14);
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 220ms ease;
+}
+.brand:hover img {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 6px 16px rgba(8, 47, 73, 0.22);
+}
+.brand-text span { letter-spacing: 0.01em; color: var(--ink-soft); }
+/* CTA matches the primary-button gradient and gains a sliding arrow. */
+.header-actions .nav-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: linear-gradient(135deg, var(--brand-500), var(--brand-700));
+  border: 1px solid transparent;
+  box-shadow: 0 6px 16px rgba(3, 105, 161, 0.24);
+  transition: transform 200ms ease, box-shadow 200ms ease, filter 200ms ease;
+}
+.header-actions .nav-cta::after {
+  content: "\2192";
+  transform: translateX(-2px);
+  opacity: 0.85;
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), opacity 220ms ease;
+}
+.header-actions .nav-cta:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow: 0 10px 22px rgba(3, 105, 161, 0.32);
+}
+.header-actions .nav-cta:hover::after { transform: translateX(2px); opacity: 1; }
+/* Theme toggle aligned to the glass design system. */
+.theme-toggle {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+}
+.theme-toggle:hover {
+  background: var(--glass-bg-2);
+  box-shadow: 0 6px 16px rgba(12, 74, 110, 0.14);
+}
