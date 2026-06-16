@@ -32,7 +32,7 @@
 
   --container: 1180px;
 
-  --font-display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-display: "Lora", Georgia, "Times New Roman", serif;
   --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   --font-accent: "Lora", Georgia, "Times New Roman", serif;
 
@@ -3567,9 +3567,11 @@ body::before {
 [data-theme="dark"] .section--alt { background: rgba(255, 255, 255, 0.025) !important; }
 [data-theme="dark"] .section--alt::before { display: none; }
 
-/* ---- Typography: bold sans + italic-serif accent ---- */
-h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.025em; }
-h1 { font-weight: 800; line-height: 1.04; }
+/* ---- Typography: institutional serif headings + Inter body ----
+   Lora only loads up to 700, and serif headings want near-normal tracking
+   (the tight negative tracking was tuned for the old sans display face). */
+h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.01em; }
+h1 { font-weight: 700; line-height: 1.08; }
 h2 { font-weight: 700; }
 .serif-accent {
   font-family: var(--font-accent);
