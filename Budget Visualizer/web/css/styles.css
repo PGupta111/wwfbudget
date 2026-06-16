@@ -4802,32 +4802,33 @@ h1 { font-size: clamp(2.4rem, 5.2vw, 4rem); }
 @media (prefers-reduced-motion: reduce) { .view-opt--3d { animation: none; } }
 
 @media (max-width: 760px) {
-  /* Flow: keep the Sankey inside its card (no full-bleed) so it never makes
-     the page wider than the screen; it scrolls horizontally within the card. */
+  /* Flow: keep the Sankey inside its card (no full-bleed) and scale it to fit
+     the screen width — no horizontal scrolling. Tap a band for the figures. */
   .sankey-card--full {
     width: auto;
     margin-left: 0;
     margin-right: 0;
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
-    padding: 0.9rem;
+    padding: 0.75rem;
+    overflow-x: hidden;
   }
-  #sankey-chart { min-width: 540px; }
+  #sankey-chart { min-width: 0; width: 100%; }
 
-  /* Flow "key": a compact, single scrollable row instead of a tall stack */
+  /* Flow "key": compact chips that wrap to a couple of short rows and fit the
+     width (no off-screen scroll, no tall stack). */
   #sankey-legend.legend {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    gap: 0.4rem;
-    margin-top: 0.9rem;
-    padding-bottom: 0.35rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.3rem 0.4rem;
+    margin-top: 0.85rem;
   }
   #sankey-legend .legend-item {
-    flex: 0 0 auto;
-    font-size: 0.72rem;
-    padding: 0.3rem 0.62rem;
+    font-size: 0.68rem;
+    padding: 0.22rem 0.5rem;
+    gap: 0.32rem;
   }
+  #sankey-legend .legend-swatch { width: 9px; height: 9px; }
 
   /* Data tables: readable, scroll inside the card rather than crushing columns */
   #explorer table.data-table,
