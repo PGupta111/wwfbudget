@@ -4730,3 +4730,57 @@ h1 { font-size: clamp(2.4rem, 5.2vw, 4rem); }
 .cap-legend-item { display: inline-flex; align-items: center; gap: 0.4rem; }
 .cap-legend-item i { width: 11px; height: 11px; border-radius: 3px; box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.08); flex: none; }
 [data-theme="dark"] .cap-legend-item i { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.16); }
+
+/* ============================================================
+   HEADER — brand-forward / civic treatment
+   ============================================================ */
+.site-header .container { padding-top: 0.7rem; padding-bottom: 0.7rem; }
+
+/* Institutional brand lockup: a larger seal + uppercase serif name + tagline */
+.brand img { height: 44px; border-radius: 10px; }
+.brand-text strong {
+  font-family: var(--font-display);
+  font-size: 1.04rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink);
+}
+.brand-text span {
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  color: var(--ink-soft);
+}
+
+/* "Ask the budget" — outline action that opens the assistant */
+.nav-ask {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--brand-700);
+  background: var(--glass-bg, transparent);
+  border: 1px solid var(--brand-300);
+  border-radius: var(--radius-sm);
+  padding: 0.44rem 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+.nav-ask svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.nav-ask:hover { background: var(--brand-700); color: #fff; border-color: var(--brand-700); transform: translateY(-1px); }
+[data-theme="dark"] .nav-ask { color: var(--brand-300); border-color: var(--glass-border); }
+[data-theme="dark"] .nav-ask:hover { color: #fff; background: var(--brand-700); border-color: var(--brand-700); }
+
+/* Tighten the action cluster so brand + nav + actions stay on one line */
+@media (max-width: 1040px) {
+  .nav-ask span { display: none; }
+  .nav-ask { padding: 0.44rem 0.55rem; }
+}
+@media (max-width: 820px) {
+  /* On mobile the floating launcher already provides this, so drop it here */
+  .nav-ask { display: none; }
+  .brand img { height: 34px; }
+}

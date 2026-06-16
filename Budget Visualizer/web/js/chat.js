@@ -273,6 +273,14 @@ function build() {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && state.open) closePanel();
   });
+
+  // Let any element opt in to opening the assistant (e.g. the header button).
+  document.querySelectorAll("[data-open-chat]").forEach((b) =>
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      openPanel();
+    })
+  );
 }
 
 function boot() {
