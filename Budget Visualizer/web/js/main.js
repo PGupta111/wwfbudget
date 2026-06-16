@@ -654,9 +654,9 @@ function setupExplore(data) {
 
   opts.forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
 
-  let saved = "2d";
+  let saved = "flow";
   try {
-    saved = localStorage.getItem("wwf-view") || "2d";
+    saved = localStorage.getItem("wwf-view") || "flow";
   } catch (e) {}
   setView(saved);
 }

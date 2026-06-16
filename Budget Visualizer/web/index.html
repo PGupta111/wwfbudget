@@ -123,15 +123,15 @@
         for the details behind it.
       </p>
       <div class="view-toggle" id="view-toggle" role="tablist" aria-label="Choose a view">
-        <button type="button" class="view-opt is-active" data-view="2d" role="tab" aria-selected="true">
+        <button type="button" class="view-opt" data-view="2d" role="tab" aria-selected="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 8 8h-8z"/></svg>
           Charts
         </button>
-        <button type="button" class="view-opt" data-view="flow" role="tab" aria-selected="false">
+        <button type="button" class="view-opt is-active" data-view="flow" role="tab" aria-selected="true">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5c6 0 6 7 16 7M4 12h16M4 19c6 0 6-7 16-7"/></svg>
           Flow
         </button>
-        <button type="button" class="view-opt" data-view="3d" role="tab" aria-selected="false">
+        <button type="button" class="view-opt view-opt--3d" data-view="3d" role="tab" aria-selected="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 21 7v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>
           3D
         </button>
@@ -140,7 +140,7 @@
   </div>
 
   <!-- 2D charts -->
-  <div class="viz-2d" id="viz-2d">
+  <div class="viz-2d" id="viz-2d" hidden>
     <div class="container">
       <div class="donut-grid">
         <div class="donut-feature">
@@ -174,7 +174,7 @@
   </div>
 
   <!-- Flow (Sankey) -->
-  <div class="viz-flow" id="viz-flow" hidden>
+  <div class="viz-flow" id="viz-flow">
     <div class="container">
       <p class="viz-flow-intro section-intro">
         Every dollar the township takes in (left) flows into the 2026 budget,

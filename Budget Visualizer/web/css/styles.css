@@ -442,7 +442,8 @@ a { color: var(--brand-700); }
   }
 
   .hero-art {
-    order: -1;
+    /* On mobile the headline reads first, then the figure (was order:-1) */
+    order: 0;
   }
 
   .hero-panel {
@@ -4785,4 +4786,72 @@ h1 { font-size: clamp(2.4rem, 5.2vw, 4rem); }
   /* On mobile the floating launcher already provides this, so drop it here */
   .nav-ask { display: none; }
   .brand img { height: 34px; }
+}
+
+/* ============================================================
+   MOBILE POLISH — flow width/legend, diverging chart, data tables
+   + a glow on the 3D toggle
+   ============================================================ */
+
+/* Subtle glow to invite trying the 3D view (calms when it's selected) */
+.view-opt--3d:not(.is-active) { animation: view3d-glow 2.8s ease-in-out infinite; }
+@keyframes view3d-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+  50% { box-shadow: 0 0 14px 1px rgba(139, 92, 246, 0.5); }
+}
+@media (prefers-reduced-motion: reduce) { .view-opt--3d { animation: none; } }
+
+@media (max-width: 760px) {
+  /* Flow: keep the Sankey inside its card (no full-bleed) so it never makes
+     the page wider than the screen; it scrolls horizontally within the card. */
+  .sankey-card--full {
+    width: auto;
+    margin-left: 0;
+    margin-right: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 0.9rem;
+  }
+  #sankey-chart { min-width: 540px; }
+
+  /* Flow "key": a compact, single scrollable row instead of a tall stack */
+  #sankey-legend.legend {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 0.4rem;
+    margin-top: 0.9rem;
+    padding-bottom: 0.35rem;
+  }
+  #sankey-legend .legend-item {
+    flex: 0 0 auto;
+    font-size: 0.72rem;
+    padding: 0.3rem 0.62rem;
+  }
+
+  /* Data tables: readable, scroll inside the card rather than crushing columns */
+  #explorer table.data-table,
+  #capital table.data-table { table-layout: auto; min-width: 600px; }
+  #explorer .cell-item,
+  #capital .cell-item { min-width: 11rem; }
+  #capital .cap-bar { min-width: 130px; }
+}
+
+/* Diverging "what changed" chart: keep the left/right effect legible on phones */
+@media (max-width: 620px) {
+  /* Restore a slim directional cue (the full header is hidden on mobile) */
+  .yoy-grid .diverge-head {
+    display: block;
+    padding: 0 0 0.55rem;
+    border-bottom: 1px solid var(--panel-border);
+  }
+  .yoy-grid .diverge-head > span:not(.diverge-axislabel) { display: none; }
+  .yoy-grid .diverge-axislabel {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.66rem;
+  }
+  .diverge-track { height: 24px; }
+  .diverge-axis { background: var(--ink-soft); opacity: 0.4; width: 2px; }
+  .diverge-fill { top: 4px; bottom: 4px; }
 }
