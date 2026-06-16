@@ -4332,3 +4332,53 @@ h1 { font-size: clamp(2.4rem, 5.2vw, 4rem); }
   background: var(--glass-bg-2);
   box-shadow: 0 6px 16px rgba(12, 74, 110, 0.14);
 }
+
+/* ---- 5. "Other spending" long-tail → balanced, space-filling grid ----
+   The remaining spending categories were a single tall column that wasted
+   the horizontal room beside the donut. Lay them out as compact, equal
+   mini-rows that flow into as many columns as the width allows. */
+.donut-other-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 0.5rem;
+  margin-top: 1rem;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+}
+.donut-other-row {
+  gap: 0.55rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 200ms ease, box-shadow 200ms ease, background-color 200ms ease;
+}
+.donut-other-row:hover,
+.donut-other-row:focus-visible,
+.donut-other-row.is-highlighted {
+  background: var(--paper);
+  border-color: var(--brand-500);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+[data-theme="dark"] .donut-other-row:hover,
+[data-theme="dark"] .donut-other-row:focus-visible,
+[data-theme="dark"] .donut-other-row.is-highlighted {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+.donut-other-label {
+  font-size: 0.84rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+.donut-other-amount {
+  margin-left: auto;
+  padding-left: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+}
