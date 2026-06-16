@@ -51,19 +51,62 @@ async function buildContext(req) {
     lines.push(`${k.replace(/_/g, " ")}: ${usd(v.amount)} [${v.source}]`);
   }
 
-  // Spending grouped by functional category (reconciles with the charts).
+  // ---- Pre-computed answer key -------------------------------------------
+  // These are the EXACT aggregates the website displays. They are computed
+  // here (server-side) the same way the charts/tables do, so the assistant can
+  // quote them verbatim and never has to do arithmetic of its own.
+
+  // Revenue sources (sum to the total budget) — matches the revenue donut.
+  const revRows = data.tables?.revenues_summary?.rows || [];
+  const REV = [
+    ["Property taxes (municipal purpose)", "Total Amount to be Raised by Taxes for Support of Municipal Budget"],
+    ["Surplus (savings) used", "Surplus Anticipated"],
+    ["Fees, state aid & other revenue", "Total Miscellaneous Revenues"],
+    ["Delinquent tax receipts", "Receipts from Delinquent Taxes"],
+  ];
+  lines.push("");
+  lines.push("== 2026 REVENUE SOURCES (these four sum to the total budget) [Revenues Summary, Sheet 11] ==");
+  for (const [label, desc] of REV) {
+    const row = revRows.find((r) => r.description === desc);
+    lines.push(`${label}: ${usd(row && row.anticipated_2026_usd)}`);
+  }
+
+  // Spending grouped by functional category, 2026 vs 2025 (reconciles with the
+  // donut, the "what changed" chart, and the data-table group subtotals).
   const approps = data.tables?.appropriations?.rows || [];
   const items = approps.filter(isLineItem);
-  const byGroup = new Map();
+  const g26 = new Map();
+  const g25 = new Map();
   for (const r of items) {
     const g = r.functional_group || "Other";
-    byGroup.set(g, (byGroup.get(g) || 0) + (r.appropriated_2026_usd || 0));
+    g26.set(g, (g26.get(g) || 0) + (r.appropriated_2026_usd || 0));
+    g25.set(g, (g25.get(g) || 0) + (r.appropriated_2025_usd || 0));
   }
   lines.push("");
-  lines.push("== 2026 SPENDING BY FUNCTIONAL GROUP (sums of real line items) ==");
-  [...byGroup.entries()]
+  lines.push("== 2026 SPENDING BY FUNCTIONAL GROUP, vs 2025 (official category totals) ==");
+  [...g26.entries()]
     .sort((a, b) => b[1] - a[1])
-    .forEach(([g, amt]) => lines.push(`${g}: ${usd(amt)}`));
+    .forEach(([g, amt]) => {
+      const prev = g25.get(g) || 0;
+      const chg = amt - prev;
+      lines.push(`${g}: 2026 ${usd(amt)} | 2025 ${usd(prev)} | change ${chg >= 0 ? "+" : "-"}${usd(Math.abs(chg))}`);
+    });
+
+  // Largest individual line items (matches the "Largest 2026 spending lines").
+  const largest = items
+    .filter((r) => (r.appropriated_2026_usd || 0) > 0)
+    .slice()
+    .sort((a, b) => (b.appropriated_2026_usd || 0) - (a.appropriated_2026_usd || 0))
+    .slice(0, 10);
+  lines.push("");
+  lines.push("== 10 LARGEST 2026 LINE ITEMS ==");
+  largest.forEach((r, i) =>
+    lines.push(
+      `${i + 1}. ${r.account_program || r.department_division_as_printed || "Unlabeled"} (${r.functional_group}): ${usd(
+        r.appropriated_2026_usd
+      )} [${r.source_sheet || ""}]`
+    )
+  );
 
   lines.push("");
   lines.push("== EVERY APPROPRIATION LINE ITEM (2026 vs 2025) ==");
@@ -111,6 +154,13 @@ WHAT YOU DO:
 - Look up and report figures from the budget data provided below, and explain in plain English what those figures and budget terms mean.
 - When you give a dollar figure, name the source sheet shown in the data (e.g. "[Budget Summary, Sheet 3]").
 - Keep answers short, factual, and neutral. Use the figures exactly as printed; never recalculate or round in a way that changes a printed total.
+
+CRITICAL — NEVER DO ARITHMETIC. Do not add, subtract, sum, total, average, or compute percentages yourself. Only report numbers that appear VERBATIM in the data below.
+- For a category/functional-group total, use the "SPENDING BY FUNCTIONAL GROUP" section (do not add up the individual line items).
+- For revenue, use the "REVENUE SOURCES" section.
+- For the biggest items, use the "10 LARGEST 2026 LINE ITEMS" section.
+- For overall totals and the caps, use the "HEADLINE FIGURES" section.
+- If someone asks for a total or breakdown that is NOT already listed verbatim, say it is not broken out in this data and point them to the Data Tables page — do NOT calculate it yourself. These pre-computed figures are the same ones shown on the website, so always prefer them; that keeps your answers identical to the site.
 
 WHAT YOU NEVER DO:
 - Never answer hypothetical, "what if", projection, or forecasting questions (e.g. "what if we cut police", "how much will taxes be in 2030"). Decline and explain you can only describe the figures that are actually in the 2026 adopted budget.
@@ -197,7 +247,7 @@ module.exports = async (req, res) => {
     systemInstruction: { parts: [{ text: SYSTEM_RULES + "\n" + context }] },
     contents: trimmed.map((m) => ({ role: m.role, parts: [{ text: m.text }] })),
     generationConfig: {
-      temperature: 0.2,
+      temperature: 0.1,
       topP: 0.9,
       maxOutputTokens: 900,
     },
