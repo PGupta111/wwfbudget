@@ -250,7 +250,7 @@ function renderYoY(data, total) {
         const wFull = (Math.abs(g.change) / maxAbs) * 100; // left-anchored bar for mobile
         const pct = g.pctChange == null ? "—" : `${up ? "+" : ""}${g.pctChange.toFixed(1)}%`;
         return `
-        <div class="diverge-row">
+        <div class="diverge-row ${up ? "" : "is-down"}">
           <span class="diverge-name">
             <span class="donut-card-swatch" style="background:${g.color}"></span>
             <span class="diverge-name-text">${g.group}${glossBadge(GROUP_GLOSS_TERM[g.group])}</span>
@@ -259,7 +259,7 @@ function renderYoY(data, total) {
             <span class="diverge-axis"></span>
             <span class="diverge-fill ${up ? "is-up" : "is-down"}" style="--w:${w.toFixed(1)}%; --wfull:${wFull.toFixed(1)}%; ${up ? "left" : "right"}:50%;"></span>
           </div>
-          <span class="diverge-delta ${up ? "is-up" : "is-down"}">${up ? "+" : "−"}${compactDollars(Math.abs(g.change))}<span class="diverge-delta-pct">${pct}</span></span>
+          <span class="diverge-delta ${up ? "is-up" : "is-down"}">${up ? "▲" : "▼"} ${up ? "+" : "−"}${compactDollars(Math.abs(g.change))}<span class="diverge-delta-pct">${pct}</span></span>
         </div>`;
       })
       .join("")}`;

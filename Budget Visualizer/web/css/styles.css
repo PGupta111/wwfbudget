@@ -3995,12 +3995,18 @@ h1 { font-size: clamp(2.4rem, 5.2vw, 4rem); }
   transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 #changed.is-visible .diverge-fill { width: var(--w); }
+/* Increase = blue, decrease = amber (a green/teal "down" reads as up). */
 .diverge-fill.is-up { background: var(--brand-500); }
-.diverge-fill.is-down { background: var(--teal); }
+.diverge-fill.is-down { background: #f59e0b; }
 .diverge-delta { text-align: right; font-weight: 700; font-size: 0.85rem; font-variant-numeric: tabular-nums; white-space: nowrap; display: flex; flex-direction: column; line-height: 1.2; }
 .diverge-delta.is-up { color: var(--brand-700); }
-.diverge-delta.is-down { color: var(--teal); }
+.diverge-delta.is-down { color: #b45309; }
+[data-theme="dark"] .diverge-delta.is-down { color: #fbbf24; }
 .diverge-delta-pct { font-size: 0.72rem; font-weight: 500; color: var(--ink-faint); }
+
+/* Make the one category that fell year-over-year clearly stand out. */
+.diverge-row.is-down { background: rgba(245, 158, 11, 0.1); border-radius: 8px; }
+[data-theme="dark"] .diverge-row.is-down { background: rgba(245, 158, 11, 0.15); }
 
 @media (prefers-reduced-motion: reduce) { .diverge-fill { transition: none; } }
 
@@ -4850,13 +4856,20 @@ h1 { font-size: clamp(2.4rem, 5.2vw, 4rem); }
   #capital .cap-bar { min-width: 130px; }
 }
 
+@media (max-width: 620px) {
+  /* Keep the +/-% chip from stranding on its own right-aligned row */
+  .yoy-headline { gap: 0.3rem 0.6rem; }
+  .yoy-chip { margin-left: 0; }
+}
+
 /* "What changed" — revised mobile format. The center-diverging bar needs
    width to read, so on phones we switch to a clean left-anchored magnitude
-   bar; direction is shown by color (blue = more, teal = less) and the ▲/▼
+   bar; direction is shown by color (blue = more, amber = less) and the ▲/▼
    in the delta. The name + delta sit on one line, the bar spans below. */
 @media (max-width: 620px) {
   .yoy-grid { padding: 0.25rem 1rem 0.6rem; }
   .yoy-grid .diverge-head { display: none; }
+  .diverge-row.is-down { padding-left: 0.5rem; padding-right: 0.5rem; }
   .diverge-row { padding: 0.7rem 0; }
   .diverge-name { font-size: 0.86rem; }
   .diverge-delta { font-size: 0.9rem; }
