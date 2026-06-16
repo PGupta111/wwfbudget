@@ -4382,3 +4382,36 @@ h1 { font-size: clamp(2.4rem, 5.2vw, 4rem); }
   color: var(--ink);
   white-space: nowrap;
 }
+
+/* ---- 6. Long-tail spending → full-width band below the two donuts ----
+   Pulling the smaller categories out of the spending card keeps the two
+   donut cards close in height (no more tall empty area beside revenue)
+   and lets the tail use the full width in tidy, even rows. */
+.donut-tail {
+  margin-top: 1.25rem;
+  padding: 1.25rem 1.4rem 1.4rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+.donut-tail-title {
+  margin: 0 0 0.85rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+.donut-tail .donut-other-list {
+  margin-top: 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@media (max-width: 1040px) {
+  .donut-tail .donut-other-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .donut-tail .donut-other-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .donut-tail .donut-other-list { grid-template-columns: 1fr; }
+}
